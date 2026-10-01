@@ -67,8 +67,12 @@ Weekly lifecycle, on `$pageview`, Monday weeks:
 Clicker detail, per person, from their first click after the send:
 
 - Questions, contributions, new listings and re-lists in the 7 days before vs the 7 days after.
-- Funnel: asked or contributed within 24h; contributed within 7 days; then listed new knowledge after that
-  contribution, still within 7 days of the click (same window as PostHog's funnel).
+- Flags: asked or contributed within 24h; contributed within 7 days; listed within 7 days (a new listing or
+  a re-list, in any order relative to the contribution). Don't require contribution → listing order:
+  people often publish before their first `knowledge_shared` fires, and the first message of a
+  knowledge-creation chat may have no `knowledge_shared` at all.
+- The 7-day funnel's last step counts people who both contributed and listed, so it never exceeds the step
+  before it.
 
 There is no "email sent" event, so the reach share uses clickers / active people since the send, not
 recipients.

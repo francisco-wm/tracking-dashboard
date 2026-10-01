@@ -77,13 +77,14 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
     relists: row.relists,
     actedWithin24h: row.actedWithin24h,
     contributedWithin7d: row.contributedWithin7d,
-    listedAfterContributing: row.listedAfterContributing,
+    listedWithin7d: row.listedWithin7d,
     afterInProgress: row.afterInProgress,
   }));
 
   const acted = rows.filter((r) => r.actedWithin24h).length;
   const contributed = rows.filter((r) => r.contributedWithin7d).length;
-  const listed = rows.filter((r) => r.listedAfterContributing).length;
+  // Both, in any order, so the last funnel step can never exceed the one before it.
+  const listed = rows.filter((r) => r.contributedWithin7d && r.listedWithin7d).length;
 
   return (
     <SectionFrame
@@ -102,9 +103,10 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
             <strong>Asked or contributed within 24 hours:</strong> a message in a regular chat or in a
             knowledge-creation chat in the 24 hours after the click.{" "}
             <strong>Contributed within 7 days:</strong> a message in a knowledge-creation chat in the 7 days
-            after the click. <strong>Listed new knowledge after contributing:</strong> a first-time listing
-            after that contribution, still within the same 7 days from the click (the same window as PostHog’s
-            funnel).
+            after the click. <strong>Listed within 7 days:</strong> a new listing (draft to published) or a
+            re-list in the 7 days after the click, before or after the contribution. People often publish
+            before their first contribution is recorded, so the order isn’t required. The funnel’s last step
+            counts people who did both.
           </p>
           <p>
             The table compares each clicker’s 7 days before their first click with the 7 days after. Rows
@@ -129,7 +131,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
           steps={[
             { label: "Clicked “Share your knowledge”", count: rows.length },
             { label: "Contributed within 7 days", count: contributed },
-            { label: "Then listed new knowledge", count: listed },
+            { label: "Also listed or re-listed knowledge", count: listed },
           ]}
         />
       </div>
@@ -164,7 +166,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
                   <TableHeaderCell>Re-lists</TableHeaderCell>
                   <TableHeaderCell>Acted in 24h</TableHeaderCell>
                   <TableHeaderCell>Contributed in 7d</TableHeaderCell>
-                  <TableHeaderCell>Then listed</TableHeaderCell>
+                  <TableHeaderCell>Listed in 7d</TableHeaderCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -198,7 +200,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
                       <Flag on={p.contributedWithin7d} />
                     </TableCell>
                     <TableCell>
-                      <Flag on={p.listedAfterContributing} />
+                      <Flag on={p.listedWithin7d} />
                     </TableCell>
                   </TableRow>
                 ))}

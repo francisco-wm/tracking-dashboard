@@ -165,8 +165,8 @@ WHERE timestamp >= toDateTime({history_start})
 
 /**
  * One row per person who clicked since the send, from their first click:
- * activity in the 7 days before vs after, plus funnel flags. The last flag
- * uses the same 7-day window from the click as PostHog's funnel.
+ * activity in the 7 days before vs after, plus funnel flags. "Listed" is a
+ * new listing or a re-list within 7 days of the click, in any order.
  * Values: events_start (send - 7 days), send, end (exclusive).
  */
 export const CLICKERS = `
@@ -184,13 +184,8 @@ SELECT
   arrayCount(x -> x.1 = 'relist' AND x.2 > first_click AND x.2 <= first_click + INTERVAL 7 DAY, evts) AS relists_after,
   arrayExists(x -> x.1 IN ('question', 'contribution') AND x.2 > first_click AND x.2 <= first_click + INTERVAL 1 DAY, evts) AS acted_within_24h,
   arrayExists(x -> x.1 = 'contribution' AND x.2 > first_click AND x.2 <= first_click + INTERVAL 7 DAY, evts) AS contributed_within_7d,
-  contributed_within_7d AND arrayExists(
-    x -> x.1 = 'new_listing'
-      -- after the first contribution that followed the click
-      AND x.2 > arrayMin(arrayMap(c -> c.2, arrayFilter(c -> c.1 = 'contribution' AND c.2 > first_click AND c.2 <= first_click + INTERVAL 7 DAY, evts)))
-      AND x.2 <= first_click + INTERVAL 7 DAY,
-    evts
-  ) AS listed_after_contributing
+  -- any order: people often publish before their first knowledge_shared fires
+  arrayExists(x -> x.1 IN ('new_listing', 'relist') AND x.2 > first_click AND x.2 <= first_click + INTERVAL 7 DAY, evts) AS listed_within_7d
 FROM (
   SELECT
     person_id,

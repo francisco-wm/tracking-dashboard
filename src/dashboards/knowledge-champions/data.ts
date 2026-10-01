@@ -255,7 +255,7 @@ export interface ClickerRow {
   relists: BeforeAfter;
   actedWithin24h: boolean;
   contributedWithin7d: boolean;
-  listedAfterContributing: boolean;
+  listedWithin7d: boolean;
 }
 
 export async function loadClickers(ctx: DashboardContext, kc: KCContext) {
@@ -278,7 +278,7 @@ export async function loadClickers(ctx: DashboardContext, kc: KCContext) {
     relists: pair(r, "relists"),
     actedWithin24h: Boolean(num(r.acted_within_24h)),
     contributedWithin7d: Boolean(num(r.contributed_within_7d)),
-    listedAfterContributing: Boolean(num(r.listed_after_contributing)),
+    listedWithin7d: Boolean(num(r.listed_within_7d)),
   }));
   return { rows, fetchedAt };
 }
