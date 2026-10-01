@@ -66,6 +66,14 @@
   }
 }
 
+/* starling-ui's Tabs hover with pine-950 at 10%, which vanishes on the dark
+   background (pine-950 itself). Use the light ink at the same strength. */
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  [role="tab"].hover\:bg-pine-950\/10:not([data-active]):hover {
+    background-color: color-mix(in oklab, var(--color-pine-50) 10%, transparent);
+  }
+}
+
 body {
   @apply bg-background-primary text-text-primary font-sans antialiased;
 }
