@@ -1,1 +1,75 @@
 @import "tailwindcss";
+@import "@wingmaite/starling-ui/styles.css";
+
+@source "../../node_modules/@wingmaite/starling-ui/dist";
+
+/* Chart roles. Values are starling primitives, checked with the dataviz
+   palette validator in both modes. "before" is a deliberate neutral: it is the
+   comparison line, never an identity slot competing with "after". */
+@theme {
+  /* starling names GeistMono without shipping it; keep a real monospace fallback. */
+  --font-mono: GeistMono, ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-surface-card: var(--color-background-light);
+  --color-chart-grid: var(--color-pine-100);
+  --color-chart-before: var(--color-pine-400);
+  --color-chart-after: var(--color-scarlet-500);
+  --color-chart-1: var(--color-azure-600);
+  --color-chart-2: var(--color-saffron-600);
+  --color-chart-new: var(--color-azure-600);
+  --color-chart-returning: var(--color-pine-400);
+  --color-chart-came-back: var(--color-scarlet-500);
+  --color-chart-dropped: var(--color-pine-300);
+  --color-chart-marker: var(--color-pine-600);
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* starling-ui ships light tokens only. Dark mode remaps the semantic tokens
+   onto starling's own pine primitives; no new colour values. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-background-primary: var(--color-pine-950);
+    --color-background-light: color-mix(in oklab, var(--color-pine-900) 35%, var(--color-pine-950));
+    --color-text-primary: var(--color-pine-50);
+    --color-text-secondary: var(--color-pine-300);
+    --color-text-inverse: var(--color-pine-950);
+    --color-border-default: var(--color-pine-800);
+    --color-border-subtle: var(--color-pine-700);
+    --color-border-strong: var(--color-pine-500);
+    --color-action-primary: var(--color-pine-50);
+    --color-action-secondary: var(--color-pine-800);
+    --color-focus-ring: var(--color-azure-400);
+    --color-text-success: var(--color-moss-300);
+    --color-text-danger: var(--color-scarlet-300);
+    --color-border-danger: var(--color-scarlet-400);
+    --color-table-row-hover: var(--color-pine-900);
+    --color-table-row-selected: var(--color-pine-800);
+    --color-table-row-striped: var(--color-pine-900);
+    --color-table-footer-bg: var(--color-pine-900);
+
+    --color-chart-grid: var(--color-pine-800);
+    --color-chart-1: var(--color-azure-500);
+    --color-chart-new: var(--color-azure-500);
+    --color-chart-dropped: var(--color-pine-600);
+    --color-chart-marker: var(--color-pine-300);
+  }
+}
+
+/* starling-ui's Select highlights items with the light primitive pine-50, which
+   matches dark-mode text. Give the highlight a dark step instead. */
+@media (prefers-color-scheme: dark) {
+  [role="option"][data-highlighted] .group-data-highlighted\:bg-pine-50 {
+    background-color: var(--color-pine-800);
+  }
+}
+
+body {
+  @apply bg-background-primary text-text-primary font-sans antialiased;
+}
+
+button {
+  @apply cursor-pointer;
+}
