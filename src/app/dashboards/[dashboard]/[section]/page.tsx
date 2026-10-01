@@ -20,7 +20,7 @@ export default function SectionRoute(props: PageProps<"/dashboards/[dashboard]/[
 
 async function SectionPage({ params, searchParams }: PageProps<"/dashboards/[dashboard]/[section]">) {
   const [{ dashboard: slug, section: sectionSlug }, query] = await Promise.all([params, searchParams]);
-  const user = await requireUser();
+  await requireUser();
 
   const dashboard = getDashboard(slug);
   if (!dashboard) notFound();
@@ -39,7 +39,7 @@ async function SectionPage({ params, searchParams }: PageProps<"/dashboards/[das
   const section = dashboard.sections[sectionIndex];
 
   return (
-    <DashboardShell dashboard={dashboard} ctx={ctx} sectionIndex={sectionIndex} userEmail={user.email}>
+    <DashboardShell dashboard={dashboard} ctx={ctx} sectionIndex={sectionIndex}>
       <Suspense key={`${env}:${section.slug}`} fallback={<SectionSkeleton />}>
         <SectionBody section={section} ctx={ctx} />
       </Suspense>

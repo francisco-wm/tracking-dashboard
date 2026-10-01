@@ -8,20 +8,17 @@ import { hrefWith } from "@/lib/url";
 import { EnvSwitch } from "./env-switch";
 import { SectionKeyNav } from "./section-key-nav";
 import { SectionTabs } from "./section-tabs";
-import { UserMenu } from "./user-menu";
 
 /** Title, environment switch and section tabs. Shared by every dashboard. */
 export function DashboardShell({
   dashboard,
   ctx,
   sectionIndex,
-  userEmail,
   children,
 }: {
   dashboard: DashboardModule;
   ctx: DashboardContext;
   sectionIndex: number;
-  userEmail: string | null;
   children: ReactNode;
 }) {
   const sectionHref = (slug: string) => hrefWith(`/dashboards/${dashboard.slug}/${slug}`, ctx.searchParams);
@@ -42,8 +39,7 @@ export function DashboardShell({
           </h1>
           {note && <p className="mt-1 text-body-sm text-text-secondary">{note}</p>}
         </div>
-        <div className="flex w-44 flex-col items-end gap-2">
-          <UserMenu email={userEmail} />
+        <div className="w-44">
           <EnvSwitch
             current={ctx.env}
             options={ENV_KEYS.map((key) => ({
