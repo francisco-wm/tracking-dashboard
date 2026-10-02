@@ -25,10 +25,11 @@ Never exclude internal or test users. No `filterTestAccounts`, no `$internal`/em
 cohorts that drop staff. Numbers will be equal to or higher than PostHog dashboards that filter them out,
 and that is intended. Each dashboard's "How this is measured" note says so (`EveryoneCounted`).
 
-The one exception is opt-in: Fragment editing has an "Include internal users" switch (on by default). Off
-(`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from its `config.ts`: cohort 61287 "Wingmaite internal
-users" in production (PostHog's own test-account filter), a `@wingmaite.com` email in staging (no cohort
-there). Don't add exclusions anywhere else unless asked.
+The one exception is opt-in: Fragment editing and Home widgets have an "Include internal users" switch (on
+by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's `config.ts`: cohort 61287
+"Wingmaite internal users" in production (PostHog's own test-account filter), a `@wingmaite.com` email in
+staging (no cohort there). Keep the two definitions identical. Don't add exclusions anywhere else unless
+asked.
 
 ## Other hard rules
 
@@ -62,6 +63,13 @@ there instead of writing a variant inside a dashboard.
 | Active people           | Unique persons with a `$pageview`                                                                   |
 | Edits started           | `knowledge_piece_edit_started`; fragments are keyed by `properties.knowledge_piece_uuid`            |
 | Edited fragments listed | Unique fragments with a re-list                                                                     |
+| Home-page views         | `$pageview` where `$pathname` is `/o/<slug>`, the organisation home page and the widgets' only home |
+| Widget clicks           | `dashboard_widget_clicked`, by `properties.widget_id` and `properties.action`                       |
+| Failed widget loads     | `dashboard_widget_fetch_failed`, by `properties.widget_id`                                          |
+| Widget retries          | `dashboard_widget_retry_clicked`, by `properties.widget_id`                                         |
+| Drafts created          | `knowledge_piece_created`; carries the draft's `knowledge_piece_uuid` and `chat_uuid`               |
+| Draft messages          | `chat_message_sent` where `chat_type = 'knowledge_creation'`; includes a chat's first message       |
+| Requests completed      | `knowledge_request_completed`, on the assignee; carries no request id                               |
 
 Weekly lifecycle, on `$pageview`, Monday weeks:
 
@@ -106,6 +114,26 @@ recipients.
   with no started edit have no rate (`null`), not 0%.
 - Every timeline marks `EDITING_PUBLIC` (23 Sep 2026), when editing opened to everyone in production. No
   production edit events exist before it; staging has internal test edits from 16 Sep.
+
+## Home widgets
+
+- Widgets: `recent-fragment-drafts`, `assigned-knowledge-requests`, `recent-private-files` (`WIDGETS` in
+  `config.ts`, each with a fixed colour: chart-1, chart-2, chart-3). Actions: `open_item`,
+  `create_fragment_draft` (drafts widget only). All three are shown to everyone on the home page.
+- Period: `?range=30|90|180` (default 30). Timelines are daily and mark `WIDGETS_LIVE[env]`, the first widget
+  click (23 Sep 2026 in production, 14 Sep in staging).
+- Clicks carry no item id, so follow-through links a click to the same person's next event within
+  `LINK_SECONDS` (30 s; every match so far was within 1 s): the `knowledge_piece_created` after "Create draft",
+  or the `/company-knowledge/fragments/<uuid>` page view after opening a draft. That uuid is the
+  `knowledge_piece_uuid`.
+- New drafts: clicked → draft created → a draft message within 7 days → also listed (new listing or re-list)
+  within 7 days. Count messages with `chat_message_sent` in the draft's chat, not `knowledge_shared`, which
+  misses first messages. The last step requires a message, so it never exceeds the step before it.
+- Opened drafts: each draft counts once; listed when a new listing or re-list follows any of its opens within
+  7 days. Requests are per person (completions have no request id).
+- Only the clicks get the internal-users filter; what follows a click belongs to that person.
+- Reliability: there is no successful-load event. Failed share uses home-page views as the denominator; a
+  retry worked when that person's widget didn't fail again within 60 s.
 
 ## Building a dashboard
 

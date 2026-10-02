@@ -15,6 +15,10 @@
   --color-chart-after: var(--color-scarlet-500);
   --color-chart-1: var(--color-azure-600);
   --color-chart-2: var(--color-saffron-600);
+  /* Third identity slot. With chart-1 and chart-2 it passes all-pairs in both
+     modes; on the dark card it is below 3:1, so its charts keep end labels
+     and a table view. */
+  --color-chart-3: var(--color-scarlet-700);
   --color-chart-new: var(--color-azure-600);
   --color-chart-returning: var(--color-pine-400);
   --color-chart-came-back: var(--color-scarlet-500);

@@ -1,8 +1,8 @@
 # wingmaite analytics
 
 Internal analytics dashboards for wingmaite, built on the PostHog Query API (HogQL).
-Dashboards: **Knowledge Champions email** (`/dashboards/knowledge-champions/reach`) and **Fragment editing**
-(`/dashboards/fragment-editing/edits-listed`).
+Dashboards: **Knowledge Champions email** (`/dashboards/knowledge-champions/reach`), **Fragment editing**
+(`/dashboards/fragment-editing/edits-listed`) and **Home widgets** (`/dashboards/home-widgets/interactions`).
 
 ## Setup
 
@@ -35,7 +35,7 @@ production build without the auth variables fails closed.
   Staging 55666); the browser only ever sends `?env=staging`. `cached-query.ts` caches each project + query
   for ~10 minutes (`'use cache'`); the Refresh button expires that dashboard's tag. `metrics.ts` holds the
   canonical HogQL for every metric. No test-account filters are applied: everyone is counted, unless a viewer
-  turns off "Include internal users" on Fragment editing.
+  turns off "Include internal users" on Fragment editing or Home widgets.
 - `src/components/shell/`: the generic layout (title, environment switch, section tabs, ←/→ navigation,
   "data as of" + Refresh, "How this is measured").
 - `src/components/charts/`: hand-built SVG charts (line with end labels and send markers, bars, lifecycle
