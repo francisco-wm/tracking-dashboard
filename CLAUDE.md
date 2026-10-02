@@ -25,6 +25,11 @@ Never exclude internal or test users. No `filterTestAccounts`, no `$internal`/em
 cohorts that drop staff. Numbers will be equal to or higher than PostHog dashboards that filter them out,
 and that is intended. Each dashboard's "How this is measured" note says so (`EveryoneCounted`).
 
+The one exception is opt-in: Fragment editing has an "Include internal users" switch (on by default). Off
+(`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from its `config.ts`: cohort 61287 "Wingmaite internal
+users" in production (PostHog's own test-account filter), a `@wingmaite.com` email in staging (no cohort
+there). Don't add exclusions anywhere else unless asked.
+
 ## Other hard rules
 
 - `POSTHOG_PERSONAL_API_KEY` stays on the server. Never send it to the browser, never commit it, never read
@@ -40,22 +45,23 @@ and that is intended. Each dashboard's "How this is measured" note says so (`Eve
 
 ## Metric definitions
 
-The canonical SQL is `METRIC_SQL` in `src/dashboards/knowledge-champions/queries.ts`. Future dashboards use
-these same definitions. When a second dashboard needs one, move `METRIC_SQL` to shared code instead of
-writing a variant.
+The canonical SQL is `METRIC_SQL` in `src/lib/posthog/metrics.ts`, shared by every dashboard. Add new metrics
+there instead of writing a variant inside a dashboard.
 
-| Metric               | Definition                                                                                          |
-| -------------------- | --------------------------------------------------------------------------------------------------- |
-| Questions asked      | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                   |
-| People asking        | Unique persons with a question                                                                      |
-| Contributions        | `knowledge_shared` (count; one per message in a knowledge-creation chat). Creation, not consumption |
-| People contributing  | Unique persons with a contribution                                                                  |
-| New knowledge listed | `kp_status_changed` where `from_status = 'draft'` and `to_status = 'published'`                     |
-| Re-listed            | `knowledge_piece_republished`                                                                       |
-| First-time creators  | Persons whose first-ever new listing (all history) falls in the window                              |
-| Email clicks         | `reach_email_cta_clicked` where `properties.source = 'reach_email'`                                 |
-| Clickers             | Unique persons with an email click                                                                  |
-| Active people        | Unique persons with a `$pageview`                                                                   |
+| Metric                  | Definition                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- |
+| Questions asked         | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                   |
+| People asking           | Unique persons with a question                                                                      |
+| Contributions           | `knowledge_shared` (count; one per message in a knowledge-creation chat). Creation, not consumption |
+| People contributing     | Unique persons with a contribution                                                                  |
+| New knowledge listed    | `kp_status_changed` where `from_status = 'draft'` and `to_status = 'published'`                     |
+| Re-listed               | `knowledge_piece_republished`                                                                       |
+| First-time creators     | Persons whose first-ever new listing (all history) falls in the window                              |
+| Email clicks            | `reach_email_cta_clicked` where `properties.source = 'reach_email'`                                 |
+| Clickers                | Unique persons with an email click                                                                  |
+| Active people           | Unique persons with a `$pageview`                                                                   |
+| Edits started           | `knowledge_piece_edit_started`; fragments are keyed by `properties.knowledge_piece_uuid`            |
+| Edited fragments listed | Unique fragments with a re-list                                                                     |
 
 Weekly lifecycle, on `$pageview`, Monday weeks:
 
@@ -87,12 +93,28 @@ recipients.
 - If a metric was first tracked after the before window started, show `trackingCaveat` instead of a silent
   unfair comparison.
 
+## Fragment editing
+
+- Period: `?range=30|90|180` (default 90) means today and the N-1 days before it. PostHog's `-90d` counts
+  one more day.
+- Timelines are daily, not weekly: the launch was mid-week, and a Monday bucket shows post-launch events
+  under a pre-launch date.
+- Edit completion (same as the PostHog funnel aggregated by `knowledge_piece_uuid`): a fragment with an edit
+  started in the period is completed when a re-list of it follows within 30 days of any of its starts. Each
+  fragment counts once. "Still open" = not completed and last start within 30 days, so it can still count.
+- Daily completion groups by the day the edit started; a fragment edited on two days counts on both. Days
+  with no started edit have no rate (`null`), not 0%.
+- Every timeline marks `EDITING_PUBLIC` (23 Sep 2026), when editing opened to everyone in production. No
+  production edit events exist before it; staging has internal test edits from 16 Sep.
+
 ## Building a dashboard
 
 - One self-contained module in `src/dashboards/<slug>/` exporting a `DashboardModule`
   (`src/dashboards/types.ts`), plus one line in `src/dashboards/registry.ts`. Don't change shared code to
   add a dashboard.
 - Routes are `/dashboards/<dashboard>/<section>`. Every section is linkable; ←/→ switch sections.
+- Dashboard-wide filters go in the module's optional `controls(ctx, path)` (rendered next to the environment
+  switch) and live in URL params, with defaults left out of the URL.
 - Each section opens with one plain sentence generated from the data (keep these pure and unit-tested,
   like `sentences.ts`), then only its charts, then a collapsed "How this is measured" note.
 - Charts follow the dataviz rules already in place: one y-axis, legend for 2+ series with end labels,

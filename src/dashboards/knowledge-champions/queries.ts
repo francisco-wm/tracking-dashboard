@@ -3,16 +3,7 @@
 // passed as {placeholders}; datetimes are "YYYY-MM-DD 00:00:00" in UTC.
 // No test-account filters anywhere: everyone is counted.
 
-export const METRIC_SQL = {
-  question: `event = 'chat_message_sent' AND properties.chat_type = 'chat'`,
-  contribution: `event = 'knowledge_shared'`,
-  newListing: `event = 'kp_status_changed' AND properties.from_status = 'draft' AND properties.to_status = 'published'`,
-  relist: `event = 'knowledge_piece_republished'`,
-  click: `event = 'reach_email_cta_clicked' AND properties.source = 'reach_email'`,
-  active: `event = '$pageview'`,
-} as const;
-
-export type MetricKey = keyof typeof METRIC_SQL;
+import { METRIC_SQL } from "@/lib/posthog/metrics";
 
 const M = METRIC_SQL;
 

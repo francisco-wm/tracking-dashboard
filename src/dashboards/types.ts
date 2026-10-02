@@ -33,6 +33,11 @@ export interface DashboardModule {
   description: string;
   /** One line under the title, e.g. which windows are being compared. */
   headerNote?(ctx: DashboardContext): string | null;
+  /**
+   * Dashboard-wide filters shown next to the environment switch, e.g. a date
+   * range. `path` is the current section's path, for building links.
+   */
+  controls?(ctx: DashboardContext, path: string): ReactNode;
   // Each section owns its data type; the page only passes load() output to View.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sections: readonly SectionModule<any>[];

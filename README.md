@@ -1,7 +1,8 @@
 # wingmaite analytics
 
 Internal analytics dashboards for wingmaite, built on the PostHog Query API (HogQL).
-First dashboard: **Knowledge Champions email** (`/dashboards/knowledge-champions/reach`).
+Dashboards: **Knowledge Champions email** (`/dashboards/knowledge-champions/reach`) and **Fragment editing**
+(`/dashboards/fragment-editing/edits-listed`).
 
 ## Setup
 
@@ -32,8 +33,9 @@ production build without the auth variables fails closed.
 
 - `src/lib/posthog/`: the server-only query client. `environments.ts` is the allowlist (Production 60292,
   Staging 55666); the browser only ever sends `?env=staging`. `cached-query.ts` caches each project + query
-  for ~10 minutes (`'use cache'`); the Refresh button expires that dashboard's tag. No test-account filters
-  are applied anywhere: everyone is counted.
+  for ~10 minutes (`'use cache'`); the Refresh button expires that dashboard's tag. `metrics.ts` holds the
+  canonical HogQL for every metric. No test-account filters are applied: everyone is counted, unless a viewer
+  turns off "Include internal users" on Fragment editing.
 - `src/components/shell/`: the generic layout (title, environment switch, section tabs, ←/→ navigation,
   "data as of" + Refresh, "How this is measured").
 - `src/components/charts/`: hand-built SVG charts (line with end labels and send markers, bars, lifecycle
@@ -47,6 +49,9 @@ production build without the auth variables fails closed.
    Each section is `{ slug, label, load(ctx), View }`; `load` returns `{ data, asOf }`.
 2. Run your HogQL through `cachedHogQL(ctx.projectId, ctx.dashboard, name, sql, values)`.
 3. Add one line to `src/dashboards/registry.ts`.
+
+Dashboard-wide filters (like Fragment editing's time range) go in the module's optional `controls(ctx, path)`;
+they live in URL params, so every view stays linkable.
 
 ### Knowledge Champions: new send
 

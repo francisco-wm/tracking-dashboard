@@ -13,6 +13,8 @@ export interface LineSeries {
   color: string;
   /** null = no data (yet); the line stops there. */
   values: (number | null)[];
+  /** Tooltip text for a null value. Defaults to "Not yet". */
+  emptyLabel?: string;
 }
 
 export interface ChartMarker {
@@ -37,6 +39,8 @@ export interface LineChartProps {
 
 const MARGIN = { top: 22, right: 56, bottom: 26, left: 40 };
 const LABEL_GAP = 15;
+/** Narrowest spacing between x-axis labels before some are dropped. */
+const TICK_GAP = 48;
 
 export function LineChart({
   series,
@@ -50,15 +54,18 @@ export function LineChart({
   ariaLabel,
 }: LineChartProps) {
   const { ref, width } = useMeasuredWidth<HTMLDivElement>();
-  const [active, setActive] = useState<number | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
 
   const count = xLabels.length;
+  // The data can shrink under a remembered hover (e.g. a shorter date range).
+  const active = hovered !== null && hovered < count ? hovered : null;
   const plotW = Math.max(0, width - MARGIN.left - MARGIN.right);
   const plotH = height - MARGIN.top - MARGIN.bottom;
   const all = series.flatMap((s) => s.values.filter((v): v is number => v !== null));
   const ticks = niceTicks(0, Math.max(0, ...all), 4, format === "int");
   const x = (i: number) => MARGIN.left + (count > 1 ? (i / (count - 1)) * plotW : plotW / 2);
   const y = linearScale([ticks.min, ticks.max], [MARGIN.top + plotH, MARGIN.top]);
+  const xTicks = fitTicks(xTickIndices, x);
 
   function indexAt(clientX: number, rect: DOMRect) {
     const step = count > 1 ? plotW / (count - 1) : plotW;
@@ -67,7 +74,7 @@ export function LineChart({
   }
 
   function onPointerMove(event: PointerEvent<SVGSVGElement>) {
-    setActive(indexAt(event.clientX, event.currentTarget.getBoundingClientRect()));
+    setHovered(indexAt(event.clientX, event.currentTarget.getBoundingClientRect()));
   }
 
   // Keyboard focus only: after a mouse click the arrows keep switching sections.
@@ -77,7 +84,7 @@ export function LineChart({
     event.preventDefault();
     event.stopPropagation();
     const delta = event.key === "ArrowLeft" ? -1 : 1;
-    setActive((i) => Math.min(count - 1, Math.max(0, (i ?? count - 1) + delta)));
+    setHovered((i) => Math.min(count - 1, Math.max(0, (i ?? count - 1) + delta)));
   }
 
   const endLabels = placeEndLabels(series, x, y, format, partialIndex);
@@ -89,7 +96,8 @@ export function LineChart({
           key: s.key,
           label: s.label,
           color: s.color,
-          value: s.values[active] === null ? "Not yet" : formatNumber(s.values[active]!, format),
+          value:
+            s.values[active] === null ? (s.emptyLabel ?? "Not yet") : formatNumber(s.values[active]!, format),
         }));
 
   return (
@@ -103,9 +111,9 @@ export function LineChart({
       data-chart
       onKeyDown={onKeyDown}
       onFocus={(event) => {
-        if (event.currentTarget.matches(":focus-visible")) setActive((i) => i ?? count - 1);
+        if (event.currentTarget.matches(":focus-visible")) setHovered((i) => i ?? count - 1);
       }}
-      onBlur={() => setActive(null)}
+      onBlur={() => setHovered(null)}
     >
       {width > 0 && (
         <svg
@@ -114,7 +122,7 @@ export function LineChart({
           className="block overflow-visible"
           aria-hidden="true"
           onPointerMove={onPointerMove}
-          onPointerLeave={() => setActive(null)}
+          onPointerLeave={() => setHovered(null)}
         >
           {/* gridlines + y ticks */}
           {ticks.values.map((tick) => (
@@ -140,7 +148,7 @@ export function LineChart({
           ))}
 
           {/* x ticks */}
-          {xTickIndices.map((i) => (
+          {xTicks.map((i) => (
             <text
               key={i}
               x={x(i)}
@@ -258,6 +266,15 @@ export function LineChart({
   );
 }
 
+/** Drops x-axis labels that would collide at this width, keeping the latest one. */
+function fitTicks(indices: number[], x: (i: number) => number): number[] {
+  const kept: number[] = [];
+  for (const i of [...indices].sort((a, b) => b - a)) {
+    if (kept.length === 0 || x(kept[0]) - x(i) >= TICK_GAP) kept.unshift(i);
+  }
+  return kept;
+}
+
 function SeriesPath({
   series,
   x,
@@ -270,6 +287,8 @@ function SeriesPath({
   partialIndex?: number;
 }) {
   const solid: string[] = [];
+  // Solid points with no solid neighbour draw no line, so they get a dot.
+  const lone: number[] = [];
   let partial = "";
   let pen = false;
   series.values.forEach((value, i) => {
@@ -285,6 +304,9 @@ function SeriesPath({
       pen = false;
       return;
     }
+    const next = series.values[i + 1];
+    const continues = next !== null && next !== undefined && i + 1 !== partialIndex;
+    if (!pen && !continues) lone.push(i);
     solid.push(`${pen ? "L" : "M"}${x(i)},${y(value)}`);
     pen = true;
   });
@@ -292,6 +314,9 @@ function SeriesPath({
     <g fill="none" stroke={series.color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d={solid.join("")} />
       {partial && <path d={partial} opacity={0.4} />}
+      {lone.map((i) => (
+        <circle key={i} cx={x(i)} cy={y(series.values[i]!)} r={2.5} fill={series.color} stroke="none" />
+      ))}
     </g>
   );
 }

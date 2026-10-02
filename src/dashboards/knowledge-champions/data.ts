@@ -4,6 +4,7 @@ import type { DashboardContext } from "@/dashboards/types";
 import { addDays, dayRange, type ISODate } from "@/lib/dates";
 import type { HogQLValue } from "@/lib/posthog/client";
 import { cachedHogQL, type QueryRecord } from "@/lib/posthog/cached-query";
+import type { MetricKey } from "@/lib/posthog/metrics";
 
 import { SEND_DATES } from "./config";
 import {
@@ -16,7 +17,6 @@ import {
   WEEKLY,
   WINDOW_DAILY,
   WINDOW_UNIQUES,
-  type MetricKey,
 } from "./queries";
 import {
   deriveWindows,
@@ -227,14 +227,21 @@ export async function loadTrackingStart(ctx: DashboardContext, kc: KCContext) {
     end: dt(addDays(kc.today, 1)),
   });
   const r = records[0] ?? {};
-  const keys: MetricKey[] = ["question", "contribution", "newListing", "relist", "click", "active"];
+  const keys = [
+    "question",
+    "contribution",
+    "newListing",
+    "relist",
+    "click",
+    "active",
+  ] as const satisfies readonly MetricKey[];
   // minIf over no rows returns the epoch: treat it as "never tracked".
   const firstSeen = Object.fromEntries(
     keys.map((k) => {
       const value = r[k] ? day(r[k]) : null;
       return [k, value && value > "1970-01-01" ? value : null];
     }),
-  ) as Record<MetricKey, ISODate | null>;
+  ) as Record<(typeof keys)[number], ISODate | null>;
   return { firstSeen, fetchedAt };
 }
 

@@ -26,6 +26,8 @@ export function DashboardShell({
   const prev = dashboard.sections[sectionIndex - 1];
   const next = dashboard.sections[sectionIndex + 1];
   const note = dashboard.headerNote?.(ctx);
+  const currentPath = `/dashboards/${dashboard.slug}/${current.slug}`;
+  const controls = dashboard.controls?.(ctx, currentPath);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -39,17 +41,20 @@ export function DashboardShell({
           </h1>
           {note && <p className="mt-1 text-body-sm text-text-secondary">{note}</p>}
         </div>
-        <div className="w-44">
-          <EnvSwitch
-            current={ctx.env}
-            options={ENV_KEYS.map((key) => ({
-              value: key,
-              label: ENVIRONMENTS[key].label,
-              href: hrefWith(`/dashboards/${dashboard.slug}/${current.slug}`, ctx.searchParams, {
-                env: key === DEFAULT_ENV ? null : key,
-              }),
-            }))}
-          />
+        <div className="flex flex-wrap items-center gap-3">
+          {controls}
+          <div className="w-44">
+            <EnvSwitch
+              current={ctx.env}
+              options={ENV_KEYS.map((key) => ({
+                value: key,
+                label: ENVIRONMENTS[key].label,
+                href: hrefWith(currentPath, ctx.searchParams, {
+                  env: key === DEFAULT_ENV ? null : key,
+                }),
+              }))}
+            />
+          </div>
         </div>
       </header>
 
