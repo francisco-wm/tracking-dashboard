@@ -103,19 +103,20 @@ const LISTINGS_BY_FRAGMENT = `
     GROUP BY draft`;
 
 /**
- * "Create draft" clicks, followed through: the draft the same person created
- * right after the click, messages in its chat, and whether it was listed,
- * all within the window. The last step requires a message too, so it never
- * exceeds the step before it. Only the clicks are filtered by person: what
- * follows belongs to them. Values: start, end (exclusive).
+ * "Create draft" clicks, one per draft, followed through: the draft the same
+ * person created right after the click, messages in its chat, and whether it
+ * was listed, all within the window. `messaged` and `listed` count drafts;
+ * `messages` is the total sent in them. The last step requires a message too,
+ * so it never exceeds the step before it. Only the clicks are filtered by
+ * person: what follows belongs to them. Values: start, end (exclusive).
  */
 export function newDrafts(people: string): string {
   const linked = `d.timestamp >= c.timestamp - INTERVAL 5 SECOND AND d.timestamp <= c.timestamp + INTERVAL ${LINK_SECONDS} SECOND`;
   return `
 SELECT
   count() AS clicks,
-  countIf(has_draft) AS created,
   countIf(message_count > 0) AS messaged,
+  sum(message_count) AS messages,
   countIf(message_count > 0 AND was_listed) AS listed,
   countIf(message_count > 0 AND NOT was_listed AND clicked > now() - INTERVAL ${FOLLOW_WINDOW_DAYS} DAY) AS still_open
 FROM (

@@ -15,7 +15,7 @@ import {
   loadReliability,
   type WidgetReliability,
 } from "../data";
-import { share, type Filters, type Period } from "../filters";
+import { share, trackedSince, type Filters, type Period } from "../filters";
 import { plural, reliabilitySentence } from "../sentences";
 import { byWidgetOrder } from "../series";
 import { HomePageNote, PeriodNote, TimelineNote, WhoIsCounted } from "./notes";
@@ -29,7 +29,7 @@ interface ReliabilityData {
   /** People who saw any widget fail. */
   failedPeople: number;
   rows: WidgetReliability[];
-  daily: Record<string, number[]>;
+  daily: Record<string, (number | null)[]>;
 }
 
 async function load(ctx: DashboardContext) {
@@ -81,6 +81,7 @@ function View({ data, ctx }: { data: ReliabilityData; ctx: DashboardContext }) {
     <SectionFrame
       sentence={reliabilitySentence({
         days: period.days,
+        since: trackedSince(period),
         failures,
         people: failedPeople,
         retries,
@@ -104,8 +105,8 @@ function View({ data, ctx }: { data: ReliabilityData; ctx: DashboardContext }) {
             person’s widget didn’t fail again within {RETRY_SECONDS} seconds.
           </p>
           <HomePageNote />
-          <PeriodNote days={period.days} />
-          <TimelineNote env={ctx.env} />
+          <PeriodNote period={period} />
+          <TimelineNote />
           <WhoIsCounted filters={filters} env={ctx.env} />
         </>
       }
@@ -142,7 +143,7 @@ function View({ data, ctx }: { data: ReliabilityData; ctx: DashboardContext }) {
         legend={<Legend items={series.map((s) => ({ label: s.label, color: s.color }))} />}
         table={dailyTable(period, series)}
       >
-        <LineChart {...dailyChart(period, ctx.env, series, "Failed loads per widget per day")} />
+        <LineChart {...dailyChart(period, series, "Failed loads per widget per day")} />
       </ChartCard>
       <WidgetTable
         className="lg:col-span-6"

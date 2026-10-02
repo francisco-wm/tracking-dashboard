@@ -51,8 +51,8 @@ function run(ctx: DashboardContext, name: string, sql: string, values: Record<st
   return cachedHogQL(ctx.projectId, ctx.dashboard, `${ctx.dashboard}:${name}`, sql, values);
 }
 
-/** The period: its first day through today. */
-const bounds = (hw: HWContext) => ({ start: dt(hw.period.start), end: dt(addDays(hw.today, 1)) });
+/** The counted days: the period's first tracked day through today. */
+const bounds = (hw: HWContext) => ({ start: dt(hw.period.from), end: dt(addDays(hw.today, 1)) });
 
 async function single(ctx: DashboardContext, hw: HWContext, name: string, sql: string) {
   const { records, fetchedAt } = await run(ctx, name, sql, bounds(hw));
@@ -63,6 +63,7 @@ function daily(hw: HWContext, records: QueryRecord[], column: string) {
   return dailyByWidget(
     hw.period.dates,
     records.map((r) => ({ day: day(r.day), widget: str(r.widget), value: num(r[column]) })),
+    hw.period.from,
   );
 }
 
@@ -122,8 +123,8 @@ export async function loadNewDrafts(ctx: DashboardContext, hw: HWContext) {
   const { r, fetchedAt } = await single(ctx, hw, "new-drafts", newDrafts(hw.people));
   return {
     clicks: num(r.clicks),
-    created: num(r.created),
     messaged: num(r.messaged),
+    messages: num(r.messages),
     listed: num(r.listed),
     stillOpen: num(r.still_open),
     fetchedAt,

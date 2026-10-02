@@ -24,6 +24,21 @@ describe("dailyByWidget", () => {
     expect(out["assigned-knowledge-requests"]).toEqual([0, 0, 0]);
   });
 
+  it("leaves days before tracking started empty and drops their rows", () => {
+    const out = dailyByWidget(
+      DATES,
+      [
+        { day: "2026-09-30", widget: "recent-fragment-drafts", value: 3 },
+        { day: "2026-10-01", widget: "recent-fragment-drafts", value: 2 },
+        { day: "2026-09-30", widget: "test-widget", value: 1 },
+      ],
+      "2026-10-01",
+    );
+    expect(out["recent-fragment-drafts"]).toEqual([null, 2, 0]);
+    expect(out["recent-private-files"]).toEqual([null, 0, 0]);
+    expect(out["test-widget"]).toBeUndefined();
+  });
+
   it("keeps widgets it doesn't know and ignores days outside the period", () => {
     const out = dailyByWidget(DATES, [
       { day: "2026-10-01", widget: "new-widget", value: 2 },

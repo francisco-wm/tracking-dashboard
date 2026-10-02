@@ -63,6 +63,41 @@ describe("interactionsSentence", () => {
     );
   });
 
+  it("opens with the tracking start when the range reaches back before it", () => {
+    expect(
+      interactionsSentence({
+        days: 90,
+        since: "2026-09-23",
+        homePeople: 71,
+        clickers: 13,
+        clicks: 47,
+        widgets: [{ label: DRAFTS, clicks: 23 }],
+      }),
+    ).toBe(
+      "Since widget tracking started on 23 Sep, 13 of the 71 people who opened the home page clicked a widget item, 47 clicks in all, all in Recent fragment drafts.",
+    );
+    expect(
+      reliabilitySentence({
+        days: 90,
+        since: "2026-09-23",
+        failures: 0,
+        people: 0,
+        retries: 0,
+        retriesWorked: 0,
+      }),
+    ).toBe("Since widget tracking started on 23 Sep, no widget failed to load.");
+    expect(
+      followThroughSentence({
+        days: 180,
+        since: "2026-09-23",
+        opened: { drafts: 0, listed: 0 },
+        started: { drafts: 0, listed: 0 },
+      }),
+    ).toBe(
+      "Since widget tracking started on 23 Sep, no drafts were opened or started from the drafts widget.",
+    );
+  });
+
   it("handles no clicks", () => {
     expect(interactionsSentence({ days: 30, homePeople: 71, clickers: 0, clicks: 0, widgets: [] })).toBe(
       "In the last 30 days, 71 people opened the home page and nobody clicked anything in its widgets.",

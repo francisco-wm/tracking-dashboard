@@ -1,12 +1,13 @@
 import type { SearchParams } from "@/dashboards/types";
 import { addDays, dayRange, diffDays, type ISODate } from "@/lib/dates";
 
+import { TRACKING_STARTED } from "./config";
+
 export const RANGE_DAYS = [30, 90, 180] as const;
 export type RangeDays = (typeof RANGE_DAYS)[number];
-/** The widgets went live in September 2026, so 30 days already covers all of it. */
-export const DEFAULT_RANGE: RangeDays = 30;
+export const DEFAULT_RANGE: RangeDays = 90;
 
-/** The viewer's choices, carried in the URL (?range=90, ?internal=exclude). */
+/** The viewer's choices, carried in the URL (?range=30, ?internal=exclude). */
 export interface Filters {
   days: RangeDays;
   /** Off by default: everyone is counted unless the viewer asks otherwise. */
@@ -34,18 +35,30 @@ export function filterParams(filters: Filters): Record<string, string | null> {
 
 export interface Period {
   days: RangeDays;
-  /** First day counted. */
+  /** First day of the range; timelines start here. */
   start: ISODate;
   /** Today, inclusive. It is still in progress. */
   end: ISODate;
   /** Every day of the period, oldest first; the last one is today. */
   dates: ISODate[];
+  /** First day counted: the period's start, or the day tracking started if that is later. */
+  from: ISODate;
 }
 
-/** The last `days` days, today included. */
-export function derivePeriod(today: ISODate, days: RangeDays): Period {
+/** The last `days` days, today included, counted from no earlier than `trackingStarted`. */
+export function derivePeriod(
+  today: ISODate,
+  days: RangeDays,
+  trackingStarted: ISODate = TRACKING_STARTED,
+): Period {
   const start = addDays(today, -(days - 1));
-  return { days, start, end: today, dates: dayRange(start, days) };
+  const from = trackingStarted > start ? trackingStarted : start;
+  return { days, start, end: today, dates: dayRange(start, days), from };
+}
+
+/** The day tracking started, when the period reaches back before it; otherwise null. */
+export function trackedSince(period: Period): ISODate | null {
+  return period.from > period.start ? period.from : null;
 }
 
 /** Position of `date` on the period's timelines; -1 outside the period. */

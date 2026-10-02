@@ -120,15 +120,20 @@ recipients.
 - Widgets: `recent-fragment-drafts`, `assigned-knowledge-requests`, `recent-private-files` (`WIDGETS` in
   `config.ts`, each with a fixed colour: chart-1, chart-2, chart-3). Actions: `open_item`,
   `create_fragment_draft` (drafts widget only). All three are shown to everyone on the home page.
-- Period: `?range=30|90|180` (default 30). Timelines are daily and mark `WIDGETS_LIVE[env]`, the first widget
-  click (23 Sep 2026 in production, 14 Sep in staging).
+- Period: `?range=30|90|180` (default 90). Widget tracking started on `TRACKING_STARTED` (23 Sep 2026, both
+  projects): every query counts from the later of the range's first day and that date (`period.from`), home-page
+  visits included, so shares compare the same days. Sentences then open "Since widget tracking started on 23
+  Sep". Staging's test clicks from 14 Sep are left out. Timelines are daily, show days before it as gaps, and
+  mark it.
 - Clicks carry no item id, so follow-through links a click to the same person's next event within
   `LINK_SECONDS` (30 s; every match so far was within 1 s): the `knowledge_piece_created` after "Create draft",
   or the `/company-knowledge/fragments/<uuid>` page view after opening a draft. That uuid is the
   `knowledge_piece_uuid`.
-- New drafts: clicked → draft created → a draft message within 7 days → also listed (new listing or re-list)
-  within 7 days. Count messages with `chat_message_sent` in the draft's chat, not `knowledge_shared`, which
-  misses first messages. The last step requires a message, so it never exceeds the step before it.
+- New drafts: every "Create draft" click creates one draft, so the funnel is drafts started → got at least one
+  message within 7 days → also listed (new listing or re-list) within 7 days. Every step counts drafts, not
+  people or messages; the total message count is shown alongside. Count messages with `chat_message_sent` in
+  the draft's chat, not `knowledge_shared`, which misses first messages. The last step requires a message, so
+  it never exceeds the step before it.
 - Opened drafts: each draft counts once; listed when a new listing or re-list follows any of its opens within
   7 days. Requests are per person (completions have no request id).
 - Only the clicks get the internal-users filter; what follows a click belongs to that person.

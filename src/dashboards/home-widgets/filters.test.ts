@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { dayIndex, derivePeriod, filterParams, parseFilters, share } from "./filters";
+import { dayIndex, derivePeriod, filterParams, parseFilters, share, trackedSince } from "./filters";
 
 describe("parseFilters", () => {
-  it("defaults to 30 days with everyone counted", () => {
-    expect(parseFilters({})).toEqual({ days: 30, excludeInternal: false });
+  it("defaults to 90 days with everyone counted", () => {
+    expect(parseFilters({})).toEqual({ days: 90, excludeInternal: false });
   });
 
   it("accepts the offered ranges only", () => {
-    expect(parseFilters({ range: "90" }).days).toBe(90);
+    expect(parseFilters({ range: "30" }).days).toBe(30);
     expect(parseFilters({ range: "180" }).days).toBe(180);
-    expect(parseFilters({ range: "45" }).days).toBe(30);
-    expect(parseFilters({ range: "abc" }).days).toBe(30);
-    expect(parseFilters({ range: ["90", "180"] }).days).toBe(90);
+    expect(parseFilters({ range: "45" }).days).toBe(90);
+    expect(parseFilters({ range: "abc" }).days).toBe(90);
+    expect(parseFilters({ range: ["30", "180"] }).days).toBe(30);
   });
 
   it("excludes internal users only when asked", () => {
@@ -24,8 +24,8 @@ describe("parseFilters", () => {
 
 describe("filterParams", () => {
   it("leaves defaults out of the URL", () => {
-    expect(filterParams({ days: 30, excludeInternal: false })).toEqual({ range: null, internal: null });
-    expect(filterParams({ days: 90, excludeInternal: true })).toEqual({ range: "90", internal: "exclude" });
+    expect(filterParams({ days: 90, excludeInternal: false })).toEqual({ range: null, internal: null });
+    expect(filterParams({ days: 30, excludeInternal: true })).toEqual({ range: "30", internal: "exclude" });
   });
 
   it("round-trips through parseFilters", () => {
@@ -53,13 +53,30 @@ describe("derivePeriod", () => {
     expect(p.dates).toContain("2026-12-31");
     expect(p.dates).toContain("2027-01-01");
   });
+
+  it("counts from the tracking start when the range reaches back before it", () => {
+    const p = derivePeriod("2026-10-02", 90);
+    expect(p.start).toBe("2026-07-05");
+    expect(p.dates).toHaveLength(90);
+    expect(p.from).toBe("2026-09-23");
+    expect(trackedSince(p)).toBe("2026-09-23");
+  });
+
+  it("counts the whole range once tracking is older than it", () => {
+    const p = derivePeriod("2026-10-22", 30);
+    expect(p.start).toBe("2026-09-23");
+    expect(p.from).toBe("2026-09-23");
+    expect(trackedSince(p)).toBeNull();
+    expect(trackedSince(derivePeriod("2027-01-10", 30))).toBeNull();
+    expect(derivePeriod("2026-10-21", 30).from).toBe("2026-09-23");
+    expect(trackedSince(derivePeriod("2026-10-21", 30))).toBe("2026-09-23");
+  });
 });
 
 describe("dayIndex", () => {
   const p = derivePeriod("2026-10-02", 30);
 
-  it("places the launch markers", () => {
-    expect(dayIndex(p, "2026-09-14")).toBe(11);
+  it("places the tracking marker", () => {
     expect(dayIndex(p, "2026-09-23")).toBe(20);
   });
 

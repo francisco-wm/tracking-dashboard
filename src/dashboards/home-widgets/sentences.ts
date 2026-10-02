@@ -1,6 +1,7 @@
 // The one plain sentence that opens each section, generated from the data.
 
 import { formatNumber } from "@/components/charts/scale";
+import { formatDayMonth, type ISODate } from "@/lib/dates";
 
 import { FOLLOW_WINDOW_DAYS } from "./config";
 
@@ -8,8 +9,15 @@ export function plural(count: number, one: string, many = `${one}s`): string {
   return `${formatNumber(count)} ${count === 1 ? one : many}`;
 }
 
-export function periodPhrase(days: number): string {
-  return `In the last ${days} days`;
+/** Every sentence's opening: the range, or the tracking start when the range reaches back before it. */
+interface Span {
+  days: number;
+  /** Set when counting starts at the tracking start, not at the range's first day. */
+  since?: ISODate | null;
+}
+
+export function periodPhrase({ days, since }: Span): string {
+  return since ? `Since widget tracking started on ${formatDayMonth(since)}` : `In the last ${days} days`;
 }
 
 /** "13 of the 71 people who opened the home page" */
@@ -20,15 +28,16 @@ function clickersOfVisitors(clickers: number, visitors: number): string {
   return `${formatNumber(clickers)} of the ${formatNumber(visitors)} people who opened the home page`;
 }
 
-export function interactionsSentence(input: {
-  days: number;
-  homePeople: number;
-  clickers: number;
-  clicks: number;
-  widgets: { label: string; clicks: number }[];
-}): string {
-  const { days, homePeople, clickers, clicks, widgets } = input;
-  const period = periodPhrase(days);
+export function interactionsSentence(
+  input: Span & {
+    homePeople: number;
+    clickers: number;
+    clicks: number;
+    widgets: { label: string; clicks: number }[];
+  },
+): string {
+  const { homePeople, clickers, clicks, widgets } = input;
+  const period = periodPhrase(input);
   if (clicks === 0) {
     if (homePeople === 0) return `${period}, nobody opened the home page.`;
     const opened = `${plural(homePeople, "person", "people")} opened the home page`;
@@ -50,13 +59,14 @@ export function listedOf(listed: number, total: number, one: string, many: strin
   return `${formatNumber(listed)} of the ${formatNumber(total)} ${many} ${listed === 1 ? "was" : "were"} listed`;
 }
 
-export function followThroughSentence(input: {
-  days: number;
-  opened: { drafts: number; listed: number };
-  started: { drafts: number; listed: number };
-}): string {
-  const { days, opened, started } = input;
-  const period = periodPhrase(days);
+export function followThroughSentence(
+  input: Span & {
+    opened: { drafts: number; listed: number };
+    started: { drafts: number; listed: number };
+  },
+): string {
+  const { opened, started } = input;
+  const period = periodPhrase(input);
   if (opened.drafts === 0 && started.drafts === 0) {
     return `${period}, no drafts were opened or started from the drafts widget.`;
   }
@@ -71,16 +81,17 @@ export function followThroughSentence(input: {
   return `${period}, ${openedPart}; ${startedPart}.`;
 }
 
-export function reliabilitySentence(input: {
-  days: number;
-  failures: number;
-  /** People who saw at least one widget fail. */
-  people: number;
-  retries: number;
-  retriesWorked: number;
-}): string {
-  const { days, failures, people, retries, retriesWorked } = input;
-  const period = periodPhrase(days);
+export function reliabilitySentence(
+  input: Span & {
+    failures: number;
+    /** People who saw at least one widget fail. */
+    people: number;
+    retries: number;
+    retriesWorked: number;
+  },
+): string {
+  const { failures, people, retries, retriesWorked } = input;
+  const period = periodPhrase(input);
   if (failures === 0) {
     if (retries === 0) return `${period}, no widget failed to load.`;
     const recorded = retries === 1 ? "a retry was" : `${formatNumber(retries)} retries were`;

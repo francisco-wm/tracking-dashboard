@@ -11,14 +11,14 @@ import {
   loadOpenedDrafts,
   loadRequestFollowThrough,
 } from "../data";
-import type { Filters, Period } from "../filters";
+import { trackedSince, type Filters, type Period } from "../filters";
 import { followThroughSentence, plural } from "../sentences";
 import { PeriodNote, WhoIsCounted } from "./notes";
 
 interface FollowThroughData {
   period: Period;
   filters: Filters;
-  started: { clicks: number; created: number; messaged: number; listed: number; stillOpen: number };
+  started: { clicks: number; messaged: number; messages: number; listed: number; stillOpen: number };
   opened: { clicks: number; linkedClicks: number; drafts: number; listed: number; stillOpen: number };
   requests: { people: number; completed: number; stillOpen: number };
 }
@@ -39,8 +39,8 @@ async function load(ctx: DashboardContext) {
       filters: hw.filters,
       started: {
         clicks: started.clicks,
-        created: started.created,
         messaged: started.messaged,
+        messages: started.messages,
         listed: started.listed,
         stillOpen: started.stillOpen,
       },
@@ -67,6 +67,15 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
   const W = FOLLOW_WINDOW_DAYS;
   const unmatched = Math.max(0, opened.clicks - opened.linkedClicks);
 
+  const startedSubtitle = [
+    started.clicks > 0
+      ? `Counts drafts, not people · ${plural(started.messages, "message")} sent in them`
+      : "",
+    stillOpen(started.stillOpen, `started in the last ${W} days can still be listed`),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const openedSubtitle = [
     opened.drafts > 0 ? `${plural(opened.drafts, "draft")} from ${plural(opened.linkedClicks, "click")}` : "",
     unmatched > 0
@@ -81,6 +90,7 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
     <SectionFrame
       sentence={followThroughSentence({
         days: period.days,
+        since: trackedSince(period),
         opened: { drafts: opened.drafts, listed: opened.listed },
         started: { drafts: started.clicks, listed: started.listed },
       })}
@@ -88,12 +98,17 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
         <>
           <p>
             <strong>New drafts</strong> start with a click on “Create draft” in Recent fragment drafts (
-            <code>create_fragment_draft</code>). The draft it made is the first one the same person created (
-            <code>knowledge_piece_created</code>) within {LINK_SECONDS} seconds of the click. A message counts
-            when it was sent in that draft’s chat (<code>chat_message_sent</code>, knowledge creation) within{" "}
-            {W} days. That includes the chat’s first message, which often has no <code>knowledge_shared</code>
-            . The last step counts drafts that got a message <em>and</em> were listed within {W} days, so it
-            never exceeds the step before it.
+            <code>create_fragment_draft</code>); every click creates one draft. Every step counts drafts, not
+            people or messages: a draft counts once, however many messages it got.
+          </p>
+          <p>
+            <strong>Got at least one message</strong>: someone sent a message in the draft’s
+            knowledge-creation chat (<code>chat_message_sent</code>) within {W} days of the click. That
+            includes the chat’s first message, which often has no <code>knowledge_shared</code>. The click and
+            the draft are separate events, so the draft is the first one the same person created (
+            <code>knowledge_piece_created</code>) within {LINK_SECONDS} seconds of the click. The last step
+            counts drafts that got a message <em>and</em> were listed within {W} days, so it never exceeds the
+            step before it.
           </p>
           <p>
             <strong>Drafts opened</strong> start with a click on a draft in Recent fragment drafts (
@@ -116,7 +131,7 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
             <strong>Can still</strong> counts those clicked in the last {W} days that haven’t reached the last
             step yet. They can still count, so recent numbers read low until their {W} days are up.
           </p>
-          <PeriodNote days={period.days} />
+          <PeriodNote period={period} />
           <WhoIsCounted filters={filters} env={ctx.env} />
         </>
       }
@@ -124,14 +139,11 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
       <div className="lg:col-span-2">
         <Funnel
           title="New drafts started from the widget"
-          subtitle={
-            stillOpen(started.stillOpen, `started in the last ${W} days can still be listed`) || undefined
-          }
+          subtitle={startedSubtitle || undefined}
           steps={[
-            { label: "Clicked “Create draft”", count: started.clicks },
-            { label: "Draft created", count: started.created },
-            { label: `Sent a message within ${W} days`, count: started.messaged },
-            { label: "Also listed within that time", count: started.listed },
+            { label: "Drafts started with “Create draft”", count: started.clicks },
+            { label: `Got at least one message within ${W} days`, count: started.messaged },
+            { label: `Also listed within ${W} days`, count: started.listed },
           ]}
         />
       </div>

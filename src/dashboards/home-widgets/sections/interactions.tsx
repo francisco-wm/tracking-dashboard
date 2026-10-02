@@ -17,7 +17,7 @@ import {
   type ActionClicks,
   type WidgetClicks,
 } from "../data";
-import { share, type Filters, type Period } from "../filters";
+import { share, trackedSince, type Filters, type Period } from "../filters";
 import { interactionsSentence, plural } from "../sentences";
 import { byWidgetOrder } from "../series";
 import { HomePageNote, PeriodNote, TimelineNote, WhoIsCounted } from "./notes";
@@ -31,7 +31,7 @@ interface InteractionsData {
   clicks: number;
   byWidget: WidgetClicks[];
   byAction: ActionClicks[];
-  daily: Record<string, number[]>;
+  daily: Record<string, (number | null)[]>;
 }
 
 async function load(ctx: DashboardContext) {
@@ -67,6 +67,7 @@ function View({ data, ctx }: { data: InteractionsData; ctx: DashboardContext }) 
     <SectionFrame
       sentence={interactionsSentence({
         days: period.days,
+        since: trackedSince(period),
         homePeople,
         clickers,
         clicks,
@@ -86,8 +87,8 @@ function View({ data, ctx }: { data: InteractionsData; ctx: DashboardContext }) 
             people who opened the home page in the period.
           </p>
           <HomePageNote />
-          <PeriodNote days={period.days} />
-          <TimelineNote env={ctx.env} />
+          <PeriodNote period={period} />
+          <TimelineNote />
           <WhoIsCounted filters={filters} env={ctx.env} />
         </>
       }
@@ -116,7 +117,7 @@ function View({ data, ctx }: { data: InteractionsData; ctx: DashboardContext }) 
         legend={<Legend items={series.map((s) => ({ label: s.label, color: s.color }))} />}
         table={dailyTable(period, series)}
       >
-        <LineChart {...dailyChart(period, ctx.env, series, "Clicks per widget per day")} />
+        <LineChart {...dailyChart(period, series, "Clicks per widget per day")} />
       </ChartCard>
       <WidgetTable
         className="lg:col-span-6"

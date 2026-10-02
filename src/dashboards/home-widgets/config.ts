@@ -35,11 +35,12 @@ export function actionLabel(action: string): string {
   return ACTIONS[action] ?? action;
 }
 
-/** First widget click in each project. Marked on every timeline. */
-export const WIDGETS_LIVE: Record<EnvKey, ISODate> = {
-  production: "2026-09-23",
-  staging: "2026-09-14",
-};
+/**
+ * Widget tracking started on this day. Nothing before it is counted, home-page
+ * visits included, so shares compare like with like. Marked on every timeline.
+ * Staging has a few test clicks from 14 Sep, which are left out.
+ */
+export const TRACKING_STARTED: ISODate = "2026-09-23";
 
 /** Follow-through counts what happened within this many days of the click. */
 export const FOLLOW_WINDOW_DAYS = 7;

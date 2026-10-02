@@ -1,17 +1,17 @@
 import type { EnvKey } from "@/lib/posthog/environments";
 import { formatDayMonth } from "@/lib/dates";
 
-import { INTERNAL_PEOPLE, WIDGETS_LIVE } from "../config";
-import type { Filters } from "../filters";
+import { INTERNAL_PEOPLE, TRACKING_STARTED } from "../config";
+import { trackedSince, type Filters, type Period } from "../filters";
 
 /** Shared lines for the "How this is measured" notes. */
 
-export function TimelineNote({ env }: { env: EnvKey }) {
+export function TimelineNote() {
   return (
     <p>
       <strong>Timelines</strong> are daily, so every event shows on the day it happened. Today is still in
-      progress, so it is drawn lighter. The dashed line marks {formatDayMonth(WIDGETS_LIVE[env])}, the first
-      widget click in this environment.
+      progress, so it is drawn lighter. The dashed line marks {formatDayMonth(TRACKING_STARTED)}, when widget
+      tracking started; the days before it have no data.
     </p>
   );
 }
@@ -26,11 +26,20 @@ export function HomePageNote() {
   );
 }
 
-export function PeriodNote({ days }: { days: number }) {
+export function PeriodNote({ period }: { period: Period }) {
+  const { days } = period;
+  const since = trackedSince(period);
   return (
     <p>
       <strong>Last {days} days</strong> is today and the {days - 1} days before it. PostHog’s “-{days}d” also
       counts the day before that, so its totals can be slightly higher.
+      {since && (
+        <>
+          {" "}
+          Widget tracking started on {formatDayMonth(since)}, so counting starts there, home-page visits
+          included: shares compare the same days. Staging’s earlier test clicks are left out.
+        </>
+      )}
     </p>
   );
 }

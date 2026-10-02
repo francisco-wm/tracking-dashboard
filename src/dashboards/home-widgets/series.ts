@@ -12,18 +12,24 @@ export interface DailyRow {
 
 /**
  * One value per day of `dates` for every widget: each known widget, plus any
- * the data has that this dashboard doesn't know yet. Days without events are
- * zeros, not gaps; rows outside `dates` are ignored.
+ * the data has that this dashboard doesn't know yet. Days before `from` weren't
+ * tracked and are null (no line); later days without events are zeros, not
+ * gaps. Rows outside the tracked days are ignored.
  */
-export function dailyByWidget(dates: ISODate[], rows: DailyRow[]): Record<string, number[]> {
+export function dailyByWidget(
+  dates: ISODate[],
+  rows: DailyRow[],
+  from: ISODate = dates[0],
+): Record<string, (number | null)[]> {
   const index = new Map(dates.map((d, i) => [d, i]));
-  const out: Record<string, number[]> = {};
-  for (const w of WIDGETS) out[w.id] = dates.map(() => 0);
+  const empty = () => dates.map((d) => (d < from ? null : 0));
+  const out: Record<string, (number | null)[]> = {};
+  for (const w of WIDGETS) out[w.id] = empty();
   for (const row of rows) {
     const i = index.get(row.day);
-    if (i === undefined) continue;
-    out[row.widget] ??= dates.map(() => 0);
-    out[row.widget][i] += row.value;
+    if (i === undefined || row.day < from) continue;
+    out[row.widget] ??= empty();
+    out[row.widget][i] = (out[row.widget][i] ?? 0) + row.value;
   }
   return out;
 }

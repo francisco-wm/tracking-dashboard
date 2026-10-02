@@ -19,7 +19,8 @@ export const homeWidgets: DashboardModule = {
     const who = filters.excludeInternal
       ? "internal users excluded"
       : "everyone counted, including internal users";
-    return `${formatDayRange(period.start, period.end)} ${period.end.slice(0, 4)} · ${who}`;
+    // The counted days: a range reaching back before tracking starts at the tracking start.
+    return `${formatDayRange(period.from, period.end)} ${period.end.slice(0, 4)} · ${who}`;
   },
   controls,
   sections: [interactions, followThrough, reliability],
