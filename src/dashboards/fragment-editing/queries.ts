@@ -59,45 +59,58 @@ function editedFragments(people: string): string {
   HAVING length(starts) > 0`;
 }
 
-/** The edit started at `s` was completed: a re-list of the fragment followed within the window. */
-const LISTED_AFTER = (s: string) =>
-  `arrayExists(r -> r >= ${s} AND r <= ${s} + INTERVAL ${COMPLETION_WINDOW_DAYS} DAY, relists)`;
+/**
+ * One row per edit: each edit start since {start}, in order per fragment.
+ * Fragment ids never change, so an edit is listed when a re-list of its
+ * fragment follows within the window and before the fragment's next edit
+ * start: one re-list never completes two edits. `is_latest` marks the
+ * fragment's newest edit; an older unlisted one was carried on by it.
+ */
+function editRows(people: string): string {
+  return `
+  SELECT
+    fragment,
+    s,
+    i = length(sorted) AS is_latest,
+    arrayExists(
+      r -> r >= s
+        AND r <= s + INTERVAL ${COMPLETION_WINDOW_DAYS} DAY
+        AND (i = length(sorted) OR r < sorted[i + 1]),
+      relists
+    ) AS done
+  FROM (
+    SELECT fragment, relists, arraySort(starts) AS sorted
+    FROM (${editedFragments(people)}
+    )
+  )
+  ARRAY JOIN sorted AS s, arrayEnumerate(sorted) AS i`;
+}
 
 /**
- * Edit completion per fragment, like PostHog's funnel aggregated by
- * knowledge_piece_uuid: edit started → re-listed within 30 days. "Still open"
- * = not listed yet, last edit started inside the window, so it can still count.
+ * Edit completion per edit: edits started, how many were listed within 30
+ * days, and how many are still in draft (not listed, the fragment's newest
+ * edit, started inside the window, so it can still count).
  * Values: start, end (exclusive).
  */
 export function completionTotals(people: string): string {
   return `
 SELECT
   count() AS started,
+  uniq(fragment) AS fragments,
   countIf(done) AS listed,
-  countIf(NOT done AND arrayMax(starts) > now() - INTERVAL ${COMPLETION_WINDOW_DAYS} DAY) AS still_open
-FROM (
-  SELECT starts, arrayExists(s -> ${LISTED_AFTER("s")}, starts) AS done
-  FROM (${editedFragments(people)}
-  )
+  countIf(NOT done AND is_latest AND s > now() - INTERVAL ${COMPLETION_WINDOW_DAYS} DAY) AS still_in_draft
+FROM (${editRows(people)}
 )`;
 }
 
-/**
- * Edit completion by the day the edit started. A fragment edited on two
- * different days counts on both. Values: start, end (exclusive).
- */
+/** Edit completion by the day each edit started. Values: start, end (exclusive). */
 export function completionDaily(people: string): string {
   return `
 SELECT
-  day,
+  toStartOfDay(s) AS day,
   count() AS started,
   countIf(done) AS listed
-FROM (
-  SELECT
-    arrayJoin(arrayDistinct(arrayMap(s -> toDate(s), starts))) AS day,
-    arrayExists(s -> toDate(s) = day AND ${LISTED_AFTER("s")}, starts) AS done
-  FROM (${editedFragments(people)}
-  )
+FROM (${editRows(people)}
 )
 GROUP BY day
 ORDER BY day`;

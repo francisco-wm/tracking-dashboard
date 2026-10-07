@@ -107,11 +107,18 @@ recipients.
   one more day.
 - Timelines are daily, not weekly: the launch was mid-week, and a Monday bucket shows post-launch events
   under a pre-launch date.
-- Edit completion (same as the PostHog funnel aggregated by `knowledge_piece_uuid`): a fragment with an edit
-  started in the period is completed when a re-list of it follows within 30 days of any of its starts. Each
-  fragment counts once. "Still open" = not completed and last start within 30 days, so it can still count.
-- Daily completion groups by the day the edit started; a fragment edited on two days counts on both. Days
-  with no started edit have no rate (`null`), not 0%.
+- The Completion tab counts edits, not fragments: every `knowledge_piece_edit_started` is one edit, so a
+  fragment edited twice counts twice. Fragment ids never change, so an edit is listed when a re-list of its
+  fragment follows within 30 days and before that fragment's next edit start; one re-list never completes two
+  edits. PostHog's funnel counts fragments, so its rate can differ.
+- "Still in draft" (the product's wording; not "still open") = not listed, the fragment's newest edit, and
+  started within 30 days, so it can still count. An older unlisted edit counts as not listed.
+- Tiles: Edits started and Re-listed, each captioned with its distinct fragments, then the completion rate
+  and still in draft. Re-listed reuses the Edits listed tab's totals query, so it includes re-listings whose
+  edit started before the period.
+- Daily charts group edits by the day they started, so they add up to the tiles. Days with no started edit
+  have no rate (`null`), not 0%. Above the rate, "Edits started vs listed" plots the counts behind it, so a
+  100% day reads as "1 of 1". Never put counts and the rate on one chart: that needs a second y-axis.
 - Every timeline marks `EDITING_PUBLIC` (23 Sep 2026), when editing opened to everyone in production. No
   production edit events exist before it; staging has internal test edits from 16 Sep.
 

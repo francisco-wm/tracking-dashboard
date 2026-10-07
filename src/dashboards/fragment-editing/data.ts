@@ -62,16 +62,22 @@ export async function loadListingsDaily(ctx: DashboardContext, fe: FEContext) {
 // --- Edit completion ----------------------------------------------------------------
 
 export interface CompletionCounts {
-  /** Fragments someone started editing. */
+  /** Edits started: every edit start, so a fragment edited twice counts twice. */
   started: number;
-  /** Of those, re-listed within the completion window. */
+  /** Of those, listed within the completion window. */
   listed: number;
 }
 
 export async function loadCompletionTotals(ctx: DashboardContext, fe: FEContext) {
   const { records, fetchedAt } = await run(ctx, "completion-totals", completionTotals(fe.people), bounds(fe));
   const r = records[0] ?? {};
-  return { started: num(r.started), listed: num(r.listed), stillOpen: num(r.still_open), fetchedAt };
+  return {
+    started: num(r.started),
+    fragments: num(r.fragments),
+    listed: num(r.listed),
+    stillInDraft: num(r.still_in_draft),
+    fetchedAt,
+  };
 }
 
 export interface CompletionDay extends CompletionCounts {

@@ -71,7 +71,8 @@ function View({ data, ctx }: { data: EditsListedData; ctx: DashboardContext }) {
         </>
       }
     >
-      <div className="lg:col-span-2">
+      {/* Tiles are direct grid children so the row stretches them to one height. */}
+      <div className="grid gap-4 lg:col-span-6 lg:grid-cols-3">
         <StatTile
           title="Edited fragments listed"
           value={formatNumber(relistedFragments)}
@@ -81,15 +82,11 @@ function View({ data, ctx }: { data: EditsListedData; ctx: DashboardContext }) {
               : `${plural(relists, "re-listing")} in total; some fragments were re-listed more than once`
           }
         />
-      </div>
-      <div className="lg:col-span-2">
         <StatTile
           title="New knowledge listed"
           value={formatNumber(newListings)}
           caption="Fragments listed for the first time"
         />
-      </div>
-      <div className="lg:col-span-2">
         <StatTile
           title="Share of listings that were edits"
           value={allListings > 0 ? formatNumber(relists / allListings, "percent") : "–"}

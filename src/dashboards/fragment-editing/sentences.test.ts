@@ -26,29 +26,29 @@ describe("editsListedSentence", () => {
 });
 
 describe("completionSentence", () => {
-  it("gives the rate and the counts", () => {
-    expect(completionSentence({ days: 90, started: 4, listed: 2, stillOpen: 0 })).toBe(
-      "In the last 90 days, 50% of edited fragments had their changes listed: 2 of 4.",
+  it("gives the rate and the counts, per edit", () => {
+    expect(completionSentence({ days: 90, started: 4, listed: 2, stillInDraft: 0 })).toBe(
+      "In the last 90 days, 50% of edits started were listed: 2 of 4.",
     );
   });
 
-  it("says how many of the rest can still be listed", () => {
-    expect(completionSentence({ days: 90, started: 4, listed: 2, stillOpen: 2 })).toBe(
-      "In the last 90 days, 50% of edited fragments had their changes listed: 2 of 4; the other 2 were started in the last 30 days and can still be listed.",
+  it("says how many of the rest are still in draft", () => {
+    expect(completionSentence({ days: 90, started: 13, listed: 7, stillInDraft: 6 })).toBe(
+      "In the last 90 days, 53.8% of edits started were listed: 7 of 13; the other 6 are still in draft.",
     );
-    expect(completionSentence({ days: 90, started: 3, listed: 2, stillOpen: 1 })).toBe(
-      "In the last 90 days, 66.7% of edited fragments had their changes listed: 2 of 3; the other one was started in the last 30 days and can still be listed.",
+    expect(completionSentence({ days: 90, started: 3, listed: 2, stillInDraft: 1 })).toBe(
+      "In the last 90 days, 66.7% of edits started were listed: 2 of 3; the other one is still in draft.",
     );
-    expect(completionSentence({ days: 180, started: 10, listed: 4, stillOpen: 1 })).toBe(
-      "In the last 180 days, 40% of edited fragments had their changes listed: 4 of 10; 1 of the other 6 was started in the last 30 days and can still be listed.",
+    expect(completionSentence({ days: 180, started: 10, listed: 4, stillInDraft: 1 })).toBe(
+      "In the last 180 days, 40% of edits started were listed: 4 of 10; 1 of the other 6 is still in draft.",
     );
-    expect(completionSentence({ days: 180, started: 10, listed: 4, stillOpen: 3 })).toMatch(
-      /; 3 of the other 6 were started/,
+    expect(completionSentence({ days: 180, started: 10, listed: 4, stillInDraft: 3 })).toMatch(
+      /; 3 of the other 6 are still in draft\.$/,
     );
   });
 
   it("handles no started edits", () => {
-    expect(completionSentence({ days: 30, started: 0, listed: 0, stillOpen: 0 })).toBe(
+    expect(completionSentence({ days: 30, started: 0, listed: 0, stillInDraft: 0 })).toBe(
       "In the last 30 days, nobody started editing a listed fragment.",
     );
   });

@@ -2,7 +2,6 @@
 
 import { formatNumber } from "@/components/charts/scale";
 
-import { COMPLETION_WINDOW_DAYS } from "./config";
 import { completionRate } from "./filters";
 
 export function plural(count: number, one: string, many = `${one}s`): string {
@@ -26,25 +25,27 @@ export function editsListedSentence(input: { days: number; fragments: number; ne
 
 export function completionSentence(input: {
   days: number;
+  /** Edits, not fragments: a fragment edited twice counts twice. */
   started: number;
   listed: number;
   /** Not listed yet, but still inside the completion window. */
-  stillOpen: number;
+  stillInDraft: number;
 }): string {
-  const { days, started, listed, stillOpen } = input;
+  const { days, started, listed, stillInDraft } = input;
   const period = periodPhrase(days);
   const rate = completionRate(listed, started);
   if (rate === null) return `${period}, nobody started editing a listed fragment.`;
-  const main = `${period}, ${formatNumber(rate, "percent")} of edited fragments had their changes listed: ${formatNumber(listed)} of ${formatNumber(started)}`;
-  return `${main}${openClause(started - listed, stillOpen)}.`;
+  const main = `${period}, ${formatNumber(rate, "percent")} of edits started were listed: ${formatNumber(listed)} of ${formatNumber(started)}`;
+  return `${main}${draftClause(started - listed, stillInDraft)}.`;
 }
 
-/** "; the other 2 were started in the last 30 days and can still be listed" */
-function openClause(rest: number, stillOpen: number): string {
-  if (stillOpen === 0) return "";
-  const tail = `started in the last ${COMPLETION_WINDOW_DAYS} days and can still be listed`;
-  if (stillOpen === rest) {
-    return rest === 1 ? `; the other one was ${tail}` : `; the other ${formatNumber(rest)} were ${tail}`;
+/** "; the other 2 are still in draft" */
+function draftClause(rest: number, stillInDraft: number): string {
+  if (stillInDraft === 0) return "";
+  if (stillInDraft === rest) {
+    return rest === 1
+      ? "; the other one is still in draft"
+      : `; the other ${formatNumber(rest)} are still in draft`;
   }
-  return `; ${formatNumber(stillOpen)} of the other ${formatNumber(rest)} ${stillOpen === 1 ? "was" : "were"} ${tail}`;
+  return `; ${formatNumber(stillInDraft)} of the other ${formatNumber(rest)} ${stillInDraft === 1 ? "is" : "are"} still in draft`;
 }
