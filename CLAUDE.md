@@ -70,6 +70,14 @@ there instead of writing a variant inside a dashboard.
 | Drafts created          | `knowledge_piece_created`; carries the draft's `knowledge_piece_uuid` and `chat_uuid`               |
 | Draft messages          | `chat_message_sent` where `chat_type = 'knowledge_creation'`; includes a chat's first message       |
 | Requests answered       | `knowledge_request_answered`, on the publisher; old backend sent `knowledge_request_completed`      |
+| Gaps detected           | `knowledge_gap_detected`: the AI drafted a request in a chat; nobody is assigned yet                |
+| Requests sent           | `knowledge_request_created`: the first assignment, not the AI draft; `knowledge_request_uuid`       |
+| Requests opened         | `knowledge_request_opened`, once per request, by the first person assigned who opens it             |
+| Not opened in 7 days    | `knowledge_request_ignored`: still unopened 7 days after sending; not for closed or deleted         |
+| Rejections              | `knowledge_request_rejected`, by `properties.reason` (optional) and `properties.reassigned`         |
+| Answers                 | `knowledge_request_answered`: a published reply linked to the request; several per request          |
+| Requests closed         | `knowledge_request_closed`, by `properties.outcome` (`resolved` or `cancelled`)                     |
+| AI suggestions          | `system_contribution_created`/`_approved`/`_rejected`; request id is `knowledge_request_id`         |
 
 Weekly lifecycle, on `$pageview`, Monday weeks:
 
@@ -150,6 +158,37 @@ recipients.
 - Only the clicks get the internal-users filter; what follows a click belongs to that person.
 - Reliability: there is no successful-load event. Failed share uses home-page views as the denominator; a
   retry worked when that person's widget didn't fail again within 60 s.
+
+## Knowledge requests
+
+- A request is the unit, never a person: the requester, assignees and answerers are different people. The
+  base set is requests sent (`knowledge_request_created`) in the period, each followed to today by
+  `knowledge_request_uuid` (`knowledge_request_id` on `system_contribution_*`). The Gaps tab counts gaps
+  detected in the period instead.
+- Period: `?range=30|90|180` (default 90), by the day a request was sent. Hard start: the new tracking began on
+  `TRACKING_STARTED[env]` (`config.ts`: production 28 Oct, staging 26 Oct 2026). Every query counts from the
+  later of the range's first day and that date (`period.from`), and sentences then open "Since the new request
+  tracking started on 28 Oct". Nothing earlier counts: before it, most of these events didn't exist.
+- Every tile and chart counts the same requests: those sent in the counted days, with their events whenever
+  they happened. Don't narrow a card to requests sent after its event started; that made tiles disagree.
+- Events and properties can still appear after the start, so `TRACKED` (`config.ts`) is checked per project: a
+  card shows a waiting card naming the missing event or property until it has appeared, and a note at the top
+  says when something first appeared after the start. Gaps without `knowledge_request_uuid` can't be matched;
+  they show as their own segment and stay out of the sent share.
+- Daily charts cover the counted days only and group by the day a request was sent (Overview: sent, answered,
+  resolved) or a gap detected (Gaps: detected, sent), so the days add up to the tiles. Today is drawn lighter.
+- Only who sent the request (or whose chat raised the gap) gets the internal-users filter; what happens to a
+  request afterwards belongs to it.
+- `knowledge_request_opened` fires once per request, for the first assignee who opens it, named or through a
+  team. That can be the requester, when they assigned themselves or are in an assigned team: they are an
+  assignee, so it counts as an open. That is intended; don't exclude it.
+- Funnel: sent → opened by an assignee → also answered → also resolved; each step requires the ones above,
+  and skips are counted under it. It starts at "sent", not the gap (gaps and requests count on different
+  days); the gap-to-request rate is on the "Requests sent" tile. Steps not tracked yet are left off.
+- Times are medians, counted from the first assignment: `time_since_assigned_seconds` (open), the first
+  answer's `seconds_open`, and `seconds_open` on resolved closes.
+- HogQL: an unmatched LEFT JOIN side reads as defaults (1970, 0), not NULL, so joined events are collected
+  into arrays. `quantileExactIf` and correlated subqueries aren't supported.
 
 ## Building a dashboard
 

@@ -22,9 +22,29 @@ export const METRIC_SQL = {
   draftMessage: `event = 'chat_message_sent' AND properties.chat_type = 'knowledge_creation'`,
   requestCompleted: `event = 'knowledge_request_completed'`,
   requestAnswered: `event = 'knowledge_request_answered'`,
+  /** The AI found missing knowledge in a chat and drafted a request; nobody is assigned yet. */
+  gapDetected: `event = 'knowledge_gap_detected'`,
+  /** The request's first assignment: the moment it is sent. Not when the draft was created. */
+  requestSent: `event = 'knowledge_request_created'`,
+  /** The first time any assignee opened it; at most once per request. */
+  requestOpened: `event = 'knowledge_request_opened'`,
+  /** Still unopened 7 days after it was sent. */
+  requestIgnored: `event = 'knowledge_request_ignored'`,
+  requestRejected: `event = 'knowledge_request_rejected'`,
+  /** Resolved or cancelled by the requester (`properties.outcome`). */
+  requestClosed: `event = 'knowledge_request_closed'`,
+  suggestionCreated: `event = 'system_contribution_created'`,
+  suggestionApproved: `event = 'system_contribution_approved'`,
+  suggestionRejected: `event = 'system_contribution_rejected'`,
 } as const;
 
 export type MetricKey = keyof typeof METRIC_SQL;
+
+/** The knowledge request a lifecycle event belongs to. */
+export const REQUEST_ID = `properties.knowledge_request_uuid`;
+
+/** The same request id on system_contribution_* events, which name it differently. */
+export const SUGGESTION_REQUEST_ID = `properties.knowledge_request_id`;
 
 /** The fragment (knowledge piece) an edit, re-list or status change belongs to. */
 export const FRAGMENT_ID = `properties.knowledge_piece_uuid`;
