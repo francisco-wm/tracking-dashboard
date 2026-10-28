@@ -146,7 +146,7 @@ export async function loadRequestFollowThrough(ctx: DashboardContext, hw: HWCont
   const { r, fetchedAt } = await single(ctx, hw, "request-follow-through", requestFollowThrough(hw.people));
   return {
     people: num(r.people),
-    completed: num(r.completed),
+    answered: num(r.answered),
     stillOpen: num(r.still_open),
     fetchedAt,
   };

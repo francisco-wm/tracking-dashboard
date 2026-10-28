@@ -20,7 +20,7 @@ interface FollowThroughData {
   filters: Filters;
   started: { clicks: number; messaged: number; messages: number; listed: number; stillOpen: number };
   opened: { clicks: number; linkedClicks: number; drafts: number; listed: number; stillOpen: number };
-  requests: { people: number; completed: number; stillOpen: number };
+  requests: { people: number; answered: number; stillOpen: number };
 }
 
 async function load(ctx: DashboardContext) {
@@ -51,7 +51,7 @@ async function load(ctx: DashboardContext) {
         listed: opened.listed,
         stillOpen: opened.stillOpen,
       },
-      requests: { people: requests.people, completed: requests.completed, stillOpen: requests.stillOpen },
+      requests: { people: requests.people, answered: requests.answered, stillOpen: requests.stillOpen },
     },
     asOf: oldest(started.fetchedAt, opened.fetchedAt, requests.fetchedAt, byAction.fetchedAt),
   };
@@ -123,9 +123,13 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
           </p>
           <p>
             <strong>Requests</strong> are counted per person: people who opened an item in Assigned knowledge
-            requests, and whether they completed a request (<code>knowledge_request_completed</code>) within{" "}
-            {W} days of one of those clicks. Completions carry no request id, so this can’t tell which request
-            was completed.
+            requests, and whether they published an answer to a request (
+            <code>knowledge_request_answered</code>) within {W} days of one of those clicks. Widget clicks
+            carry no request id, so the answer can be to any request, not necessarily the one opened.
+          </p>
+          <p>
+            Before the new request tracking, a finished request sent <code>knowledge_request_completed</code>{" "}
+            instead. Production still runs that version for now, so either event counts as an answer.
           </p>
           <p>
             <strong>Can still</strong> counts those clicked in the last {W} days that haven’t reached the last
@@ -163,12 +167,12 @@ function View({ data, ctx }: { data: FollowThroughData; ctx: DashboardContext })
           subtitle={
             stillOpen(
               requests.stillOpen,
-              `${requests.stillOpen === 1 ? "person" : "people"} who clicked in the last ${W} days can still complete one`,
+              `${requests.stillOpen === 1 ? "person" : "people"} who clicked in the last ${W} days can still answer one`,
             ) || undefined
           }
           steps={[
             { label: "People who opened a request", count: requests.people },
-            { label: `Completed a request within ${W} days`, count: requests.completed },
+            { label: `Answered a request within ${W} days`, count: requests.answered },
           ]}
         />
       </div>

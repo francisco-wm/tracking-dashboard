@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { METRIC_SQL } from "@/lib/posthog/metrics";
+
 import { INTERNAL_PEOPLE } from "./config";
 import {
   clicksByAction,
@@ -50,6 +52,14 @@ describe("people filter", () => {
     expect(count(requestFollowThrough(clause))).toBe(1);
     // The click subquery, and again where it narrows the page views to clickers.
     expect(count(openedDrafts(clause))).toBe(2);
+  });
+});
+
+describe("request follow-through", () => {
+  it("counts a published answer, or the old backend's completion", () => {
+    const sql = requestFollowThrough("");
+    expect(sql).toContain(METRIC_SQL.requestAnswered);
+    expect(sql).toContain(METRIC_SQL.requestCompleted);
   });
 });
 

@@ -21,6 +21,7 @@ export const METRIC_SQL = {
    */
   draftMessage: `event = 'chat_message_sent' AND properties.chat_type = 'knowledge_creation'`,
   requestCompleted: `event = 'knowledge_request_completed'`,
+  requestAnswered: `event = 'knowledge_request_answered'`,
 } as const;
 
 export type MetricKey = keyof typeof METRIC_SQL;

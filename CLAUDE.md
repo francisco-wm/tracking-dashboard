@@ -69,7 +69,7 @@ there instead of writing a variant inside a dashboard.
 | Widget retries          | `dashboard_widget_retry_clicked`, by `properties.widget_id`                                         |
 | Drafts created          | `knowledge_piece_created`; carries the draft's `knowledge_piece_uuid` and `chat_uuid`               |
 | Draft messages          | `chat_message_sent` where `chat_type = 'knowledge_creation'`; includes a chat's first message       |
-| Requests completed      | `knowledge_request_completed`, on the assignee; carries no request id                               |
+| Requests answered       | `knowledge_request_answered`, on the publisher; old backend sent `knowledge_request_completed`      |
 
 Weekly lifecycle, on `$pageview`, Monday weeks:
 
@@ -142,7 +142,11 @@ recipients.
   the draft's chat, not `knowledge_shared`, which misses first messages. The last step requires a message, so
   it never exceeds the step before it.
 - Opened drafts: each draft counts once; listed when a new listing or re-list follows any of its opens within
-  7 days. Requests are per person (completions have no request id).
+  7 days.
+- Requests are per person (widget clicks carry no request id): answered when the same person published an
+  answer to any request (`knowledge_request_answered`) within 7 days of one of their clicks. Production still
+  runs the old backend, which sends `knowledge_request_completed` instead, so either event counts until the
+  new tracking ships there.
 - Only the clicks get the internal-users filter; what follows a click belongs to that person.
 - Reliability: there is no successful-load event. Failed share uses home-page views as the denominator; a
   retry worked when that person's widget didn't fail again within 60 s.

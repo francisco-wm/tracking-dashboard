@@ -213,21 +213,28 @@ FROM (
 }
 
 /**
+ * A published answer to a request. The old backend sent a completion instead,
+ * and production still gets those until the new tracking ships there, so
+ * either counts.
+ */
+const REQUEST_ANSWERED = `((${M.requestAnswered}) OR (${M.requestCompleted}))`;
+
+/**
  * People who opened an assigned request from the widget, and whether they
- * completed a request within the window of one of those clicks. Per person:
- * knowledge_request_completed carries no request id to match on.
+ * answered a request within the window of one of those clicks. Per person:
+ * widget clicks carry no request id to match the answer on.
  * Values: start, end (exclusive).
  */
 export function requestFollowThrough(people: string): string {
   return `
 SELECT
   count() AS people,
-  countIf(did_complete) AS completed,
-  countIf(NOT did_complete AND arrayMax(clicked_at) > now() - INTERVAL ${FOLLOW_WINDOW_DAYS} DAY) AS still_open
+  countIf(did_answer) AS answered,
+  countIf(NOT did_answer AND arrayMax(clicked_at) > now() - INTERVAL ${FOLLOW_WINDOW_DAYS} DAY) AS still_open
 FROM (
   SELECT
     c.clicked_at AS clicked_at,
-    arrayExists(s -> arrayExists(t -> ${WITHIN_WINDOW("t", "s")}, r.completed_at), c.clicked_at) AS did_complete
+    arrayExists(s -> arrayExists(t -> ${WITHIN_WINDOW("t", "s")}, r.answered_at), c.clicked_at) AS did_answer
   FROM (
     SELECT person_id, groupArray(timestamp) AS clicked_at
     FROM events
@@ -238,10 +245,10 @@ FROM (
     GROUP BY person_id
   ) AS c
   LEFT JOIN (
-    SELECT person_id, groupArray(timestamp) AS completed_at
+    SELECT person_id, groupArray(timestamp) AS answered_at
     FROM events
     WHERE ${IN_PERIOD}
-      AND ${M.requestCompleted}
+      AND ${REQUEST_ANSWERED}
     GROUP BY person_id
   ) AS r ON c.person_id = r.person_id
 )`;
