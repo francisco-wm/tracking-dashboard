@@ -165,10 +165,12 @@ recipients.
   base set is requests sent (`knowledge_request_created`) in the period, each followed to today by
   `knowledge_request_uuid` (`knowledge_request_id` on `system_contribution_*`). The Gaps tab counts gaps
   detected in the period instead.
-- Period: `?range=30|90|180` (default 90), by the day a request was sent. Hard start: the new tracking began on
-  `TRACKING_STARTED[env]` (`config.ts`: production 28 Oct, staging 26 Oct 2026). Every query counts from the
-  later of the range's first day and that date (`period.from`), and sentences then open "Since the new request
-  tracking started on 28 Oct". Nothing earlier counts: before it, most of these events didn't exist.
+- Period: `?range=30|90|180` (default 90), by the day a request was sent. Hard start: the new tracking began at
+  `TRACKING_STARTED[env]`, a UTC day and hour (`config.ts`: production 28 Oct 18:00, when the release went live;
+  that morning's gaps still had no request id. Staging 26 Oct 2026, midnight). Every query counts from the later
+  of the range's first day and that moment (`countedFrom(period)`), and sentences then open "Since the new
+  request tracking started on 28 Oct". The first day's chart label and the period note give the hour. Nothing
+  earlier counts: before it, most of these events didn't exist.
 - Every tile and chart counts the same requests: those sent in the counted days, with their events whenever
   they happened. Don't narrow a card to requests sent after its event started; that made tiles disagree.
 - Events and properties can still appear after the start, so `TRACKED` (`config.ts`) is checked per project: a
@@ -184,7 +186,8 @@ recipients.
   assignee, so it counts as an open. That is intended; don't exclude it.
 - Funnel: sent → opened by an assignee → also answered → also resolved; each step requires the ones above,
   and skips are counted under it. It starts at "sent", not the gap (gaps and requests count on different
-  days); the gap-to-request rate is on the "Requests sent" tile. Steps not tracked yet are left off.
+  days); the gap-to-request rate is only on the Gaps tab, not on Overview, because requests sent from drafts
+  made before the tracking started have no gap to match. Steps not tracked yet are left off.
 - Times are medians, counted from the first assignment: `time_since_assigned_seconds` (open), the first
   answer's `seconds_open`, and `seconds_open` on resolved closes.
 - HogQL: an unmatched LEFT JOIN side reads as defaults (1970, 0), not NULL, so joined events are collected

@@ -113,7 +113,7 @@ function View({ data, ctx }: { data: GapsData; ctx: DashboardContext }) {
               value={formatNumber(detected)}
               caption={
                 unmatched > 0
-                  ? `${detectedSpan}; ${formatNumber(unmatched)} ${before || "older"} can’t be matched to a request`
+                  ? `${detectedSpan}; ${formatNumber(unmatched)} ${before ? `detected ${before}` : "without a request id"} can’t be matched to a request`
                   : detectedSpan
               }
             />

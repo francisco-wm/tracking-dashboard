@@ -2,17 +2,20 @@ import type { ISODate } from "@/lib/dates";
 import type { EnvKey } from "@/lib/posthog/environments";
 import { METRIC_SQL, REQUEST_ID } from "@/lib/posthog/metrics";
 
+import type { StartedAt } from "./filters";
+
 export const DASHBOARD_SLUG = "knowledge-requests";
 
 /**
  * The new knowledge-request tracking (answers, closes, rejections, gap links,
- * people or teams) started on these days. Nothing before them counts: every
- * number counts from the later of the range's first day and this date, so all
- * of them count the same requests.
+ * people or teams) started at these moments, in UTC. Nothing before them
+ * counts: every number counts from the later of the range's first day and this
+ * moment, so all of them count the same requests. Production's release went
+ * live at 18:00 on 28 Oct; that morning's events are still the old tracking.
  */
-export const TRACKING_STARTED: Record<EnvKey, ISODate> = {
-  production: "2026-10-28",
-  staging: "2026-10-26",
+export const TRACKING_STARTED: Record<EnvKey, StartedAt> = {
+  production: { date: "2026-10-28", hour: 18 },
+  staging: { date: "2026-10-26", hour: 0 },
 };
 
 /** knowledge_request_ignored fires this many days after sending when nobody has opened the request. */

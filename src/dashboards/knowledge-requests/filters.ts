@@ -31,6 +31,13 @@ export function filterParams(filters: Filters): Record<string, string | null> {
   };
 }
 
+/** A moment in UTC, to the hour: when a project's tracking started. */
+export interface StartedAt {
+  date: ISODate;
+  /** 0–23. */
+  hour: number;
+}
+
 export interface Period {
   days: RangeDays;
   /** First day of the range. */
@@ -39,6 +46,8 @@ export interface Period {
   end: ISODate;
   /** First day counted: the range's start, or the day the tracking started if that is later. */
   from: ISODate;
+  /** The UTC hour counting starts at on `from`: the tracking start's, when it falls on that day; otherwise 0. */
+  fromHour: number;
   /** Every counted day, oldest first; the last one is today. */
   dates: ISODate[];
 }
@@ -47,16 +56,34 @@ export interface Period {
 export function derivePeriod(
   today: ISODate,
   days: RangeDays,
-  trackingStarted: ISODate | null = null,
+  trackingStarted: StartedAt | null = null,
 ): Period {
   const start = addDays(today, -(days - 1));
-  const from = trackingStarted !== null && trackingStarted > start ? trackingStarted : start;
-  return { days, start, end: today, from, dates: dayRange(from, Math.max(0, diffDays(from, today) + 1)) };
+  const { date: from, hour: fromHour } =
+    trackingStarted !== null && trackingStarted.date >= start ? trackingStarted : { date: start, hour: 0 };
+  return {
+    days,
+    start,
+    end: today,
+    from,
+    fromHour,
+    dates: dayRange(from, Math.max(0, diffDays(from, today) + 1)),
+  };
 }
 
-/** The day the tracking started, when the range reaches back before it; otherwise null. */
+/** The day the tracking started, when the range reaches back before it (to the hour); otherwise null. */
 export function trackedSince(period: Period): ISODate | null {
-  return period.from > period.start ? period.from : null;
+  return period.from > period.start || period.fromHour > 0 ? period.from : null;
+}
+
+/** "18:00" when counting starts partway through the first day; null when it starts at midnight. */
+export function startTime(period: Period): string | null {
+  return period.fromHour > 0 ? `${String(period.fromHour).padStart(2, "0")}:00` : null;
+}
+
+/** The first counted moment as a HogQL datetime in UTC, e.g. "2026-10-28 18:00:00". */
+export function countedFrom(period: Period): string {
+  return `${period.from} ${startTime(period) ?? "00:00"}:00`;
 }
 
 /** part / whole; null when there is nothing to divide by. */

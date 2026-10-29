@@ -7,7 +7,7 @@ import type { HogQLValue } from "@/lib/posthog/client";
 import type { EnvKey } from "@/lib/posthog/environments";
 
 import { INTERNAL_PEOPLE, TRACKING_LOOKBACK, TRACKING_STARTED } from "./config";
-import { derivePeriod, parseFilters, type Filters, type Period } from "./filters";
+import { countedFrom, derivePeriod, parseFilters, type Filters, type Period } from "./filters";
 import { parseRequest } from "./lifecycle";
 import { gapsDaily, peopleFilter, requests, trackingStatus } from "./queries";
 import { gapTotals, type GapDay } from "./series";
@@ -39,8 +39,8 @@ function run(ctx: DashboardContext, name: string, sql: string, values: Record<st
   return cachedHogQL(ctx.projectId, ctx.dashboard, `${ctx.dashboard}:${name}`, sql, values);
 }
 
-/** The counted days: from the tracking start (or the range's first day) through today. */
-const bounds = (kr: KRContext) => ({ start: dt(kr.period.from), end: dt(addDays(kr.today, 1)) });
+/** The counted days: from the tracking start, to the hour (or the range's first day), through today. */
+const bounds = (kr: KRContext) => ({ start: countedFrom(kr.period), end: dt(addDays(kr.today, 1)) });
 
 export async function loadTracking(ctx: DashboardContext, kr: KRContext) {
   const { records, fetchedAt } = await run(ctx, "tracking", trackingStatus(), {

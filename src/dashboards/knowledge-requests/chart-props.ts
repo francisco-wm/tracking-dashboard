@@ -4,7 +4,7 @@ import type { ChartTable } from "@/components/charts/chart-card";
 import type { LineChartProps, LineSeries } from "@/components/charts/line-chart";
 import { formatDayMonth, type ISODate } from "@/lib/dates";
 
-import type { Period } from "./filters";
+import { startTime, type Period } from "./filters";
 
 /** About seven axis labels whatever the range, always including today. */
 function dailyTicks(count: number): number[] {
@@ -14,8 +14,11 @@ function dailyTicks(count: number): number[] {
   return ticks;
 }
 
-function dayLabel(period: Period, date: ISODate): string {
-  return `${formatDayMonth(date)}${date === period.end ? " (so far)" : ""}`;
+/** "28 Oct (from 18:00)" when counting starts partway through the first day; "29 Oct (so far)" for today. */
+export function dayLabel(period: Period, date: ISODate): string {
+  const time = date === period.from ? startTime(period) : null;
+  const notes = [time && `from ${time}`, date === period.end && "so far"].filter(Boolean);
+  return notes.length > 0 ? `${formatDayMonth(date)} (${notes.join(", ")})` : formatDayMonth(date);
 }
 
 /** A daily line chart over the counted days; today is still in progress, so it is drawn lighter. */

@@ -6,17 +6,16 @@ import { formatNumber } from "@/components/charts/scale";
 import { StatTile } from "@/components/charts/stat-compare";
 import { SectionFrame } from "@/components/shell/section-frame";
 import { oldest, type DashboardContext, type SectionModule } from "@/dashboards/types";
-import { formatDayMonth } from "@/lib/dates";
 
 import { dailyChart, dailyTable } from "../chart-props";
 import { WaitingCard } from "../charts/waiting";
 import type { DataKey } from "../config";
-import { krContext, loadGaps, loadRequests, loadTracking } from "../data";
+import { krContext, loadRequests, loadTracking } from "../data";
 import { share, trackedSince, type Filters, type Period } from "../filters";
 import { closingSummary, formatDuration, funnelCounts, type FunnelCounts } from "../lifecycle";
 import { overviewSentence, plural, trackingNote, waitingSentence } from "../sentences";
 import { dailyRequests, type DailyRequests } from "../series";
-import { isTracked, missing, startedInPeriod, type TrackingStart } from "../tracking";
+import { isTracked, missing, startedInPeriod } from "../tracking";
 import { MediansNote, PeriodNote, RequestsNote, WhoIsCounted, spanLabel } from "./notes";
 
 interface OverviewData {
@@ -24,7 +23,6 @@ interface OverviewData {
   filters: Filters;
   /** Null while request ids aren't tracked. */
   sent: number | null;
-  gaps: { detected: number; linked: number; sent: number; since: TrackingStart | null; tracked: boolean };
   answered: { requests: number; answered: number } | null;
   closing: { requests: number; resolved: number; medianToResolve: number | null } | null;
   funnel: { counts: FunnelCounts; steps: { answered: boolean; resolved: boolean } } | null;
@@ -37,11 +35,7 @@ interface OverviewData {
 
 async function load(ctx: DashboardContext) {
   const kr = krContext(ctx);
-  const [tracking, requests, gaps] = await Promise.all([
-    loadTracking(ctx, kr),
-    loadRequests(ctx, kr),
-    loadGaps(ctx, kr),
-  ]);
+  const [tracking, requests] = await Promise.all([loadTracking(ctx, kr), loadRequests(ctx, kr)]);
   const { status } = tracking;
   const { rows } = requests;
   const has = (keys: DataKey[]) => isTracked(status, keys);
@@ -53,13 +47,6 @@ async function load(ctx: DashboardContext) {
       period: kr.period,
       filters: kr.filters,
       sent: has(["sent"]) ? rows.length : null,
-      gaps: {
-        detected: gaps.detected,
-        linked: gaps.linked,
-        sent: gaps.sent,
-        since: startedInPeriod(status, kr.period, ["gapLink"])[0] ?? null,
-        tracked: has(["gapLink"]),
-      },
       answered: has(["sent", "answered"])
         ? { requests: rows.length, answered: rows.filter((r) => r.answers.length > 0).length }
         : null,
@@ -73,7 +60,7 @@ async function load(ctx: DashboardContext) {
       note: trackingNote(startedInPeriod(status, kr.period, ["sent", "opened", "answered", "closed"])),
       daily: dailyRequests(kr.period.dates, rows),
     } satisfies OverviewData,
-    asOf: oldest(tracking.fetchedAt, requests.fetchedAt, gaps.fetchedAt),
+    asOf: oldest(tracking.fetchedAt, requests.fetchedAt),
   };
 }
 
@@ -82,10 +69,8 @@ const pct = (part: number, whole: number) => {
   return value === null ? "–" : formatNumber(value, "percent");
 };
 
-const sinceText = (since: TrackingStart | null) => (since ? ` since ${formatDayMonth(since.date)}` : "");
-
 function View({ data, ctx }: { data: OverviewData; ctx: DashboardContext }) {
-  const { period, filters, sent, gaps, answered, closing, funnel, waiting } = data;
+  const { period, filters, sent, answered, closing, funnel, waiting } = data;
 
   if (sent === null || !funnel) {
     const keys: DataKey[] = sent === null ? ["sent"] : ["opened"];
@@ -142,12 +127,11 @@ function View({ data, ctx }: { data: OverviewData; ctx: DashboardContext }) {
           </p>
           <RequestsNote />
           <p>
-            <strong>Requests sent</strong>: <code>knowledge_request_created</code>. Its caption compares{" "}
-            <strong>gaps</strong> the AI detected (<code>knowledge_gap_detected</code>) with the ones that
-            were sent, matched on the request id; see the Gaps tab. <strong>Answered</strong>: at least one
-            published answer (<code>knowledge_request_answered</code>). <strong>Resolved</strong>: closed by
-            the requester with <code>outcome = resolved</code> (<code>knowledge_request_closed</code>).{" "}
-            <strong>Time to resolve</strong> is the median of its <code>seconds_open</code>.
+            <strong>Requests sent</strong>: <code>knowledge_request_created</code>. <strong>Answered</strong>:
+            at least one published answer (<code>knowledge_request_answered</code>). <strong>Resolved</strong>
+            : closed by the requester with <code>outcome = resolved</code> (
+            <code>knowledge_request_closed</code>). <strong>Time to resolve</strong> is the median of its{" "}
+            <code>seconds_open</code>.
           </p>
           <p>
             <strong>Where requests stall</strong> follows one set of requests through every step that is
@@ -156,7 +140,8 @@ function View({ data, ctx }: { data: OverviewData; ctx: DashboardContext }) {
             <code>knowledge_request_opened</code>); that can be the requester, when they assigned themselves
             or are in an assigned team. Requests that skipped a step, such as one answered by the requester
             before any assignee opened it, are counted under the chart. The gap step isn’t part of it: gaps
-            count by the day they were detected, requests by the day they were sent.
+            count by the day they were detected, requests by the day they were sent. The Gaps tab shows which
+            gaps became requests.
           </p>
           <MediansNote />
           <PeriodNote period={period} />
@@ -165,17 +150,7 @@ function View({ data, ctx }: { data: OverviewData; ctx: DashboardContext }) {
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:col-span-6 lg:grid-cols-4">
-        <StatTile
-          title="Requests sent"
-          value={formatNumber(sent)}
-          caption={
-            !gaps.tracked
-              ? `${plural(gaps.detected, "gap")} detected; which became requests isn’t tracked yet`
-              : gaps.linked > 0
-                ? `${pct(gaps.sent, gaps.linked)} of gaps became a request (${formatNumber(gaps.sent)} of ${formatNumber(gaps.linked)}${sinceText(gaps.since)})`
-                : `No gaps detected${sinceText(gaps.since)}`
-          }
-        />
+        <StatTile title="Requests sent" value={formatNumber(sent)} />
         {answered ? (
           <StatTile
             title="Answered"

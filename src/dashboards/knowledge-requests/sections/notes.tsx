@@ -2,7 +2,7 @@ import { formatDayMonth } from "@/lib/dates";
 import type { EnvKey } from "@/lib/posthog/environments";
 
 import { INTERNAL_PEOPLE } from "../config";
-import { trackedSince, type Filters, type Period } from "../filters";
+import { startTime, trackedSince, type Filters, type Period } from "../filters";
 
 /** Shared lines for the "How this is measured" notes. */
 
@@ -23,6 +23,7 @@ export function RequestsNote() {
 export function PeriodNote({ period }: { period: Period }) {
   const { days } = period;
   const since = trackedSince(period);
+  const time = startTime(period);
   return (
     <p>
       <strong>Last {days} days</strong> is today and the {days - 1} days before it, by the day a request was
@@ -30,8 +31,9 @@ export function PeriodNote({ period }: { period: Period }) {
       {since && (
         <>
           {" "}
-          The new request tracking started on {formatDayMonth(since)} in this project, so counting starts
-          there: before it, most of these events didn’t exist.
+          The new request tracking started on {formatDayMonth(since)}
+          {time && ` at ${time} UTC`} in this project, so counting starts there: before it, most of these
+          events didn’t exist.{time && ` ${formatDayMonth(since)} only counts the hours from ${time}.`}
         </>
       )}
     </p>
