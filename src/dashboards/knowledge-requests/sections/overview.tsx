@@ -6,10 +6,11 @@ import { formatNumber } from "@/components/charts/scale";
 import { StatTile } from "@/components/charts/stat-compare";
 import { SectionFrame } from "@/components/shell/section-frame";
 import { oldest, type DashboardContext, type SectionModule } from "@/dashboards/types";
+import { formatDayMonth } from "@/lib/dates";
 
 import { dailyChart, dailyTable } from "../chart-props";
 import { WaitingCard } from "../charts/waiting";
-import type { DataKey } from "../config";
+import { TRACKING_STARTED, type DataKey } from "../config";
 import { krContext, loadRequests, loadTracking } from "../data";
 import { share, trackedSince, type Filters, type Period } from "../filters";
 import { closingSummary, formatDuration, funnelCounts, type FunnelCounts } from "../lifecycle";
@@ -150,7 +151,11 @@ function View({ data, ctx }: { data: OverviewData; ctx: DashboardContext }) {
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:col-span-6 lg:grid-cols-4">
-        <StatTile title="Requests sent" value={formatNumber(sent)} />
+        <StatTile
+          title="Requests sent"
+          value={formatNumber(sent)}
+          caption={`Since ${formatDayMonth(TRACKING_STARTED[ctx.env].date)}, ${TRACKING_STARTED[ctx.env].date.slice(0, 4)}`}
+        />
         {answered ? (
           <StatTile
             title="Answered"
