@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Knowledge request tracking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f2f4f7;
+        --surface: #ffffff;
+        --ink: #18202c;
+        --muted: #5a6474;
+        --line: #d9dee6;
+        --keep: #2f7a57;
+        --keep-bg: #e5f2eb;
+        --change: #94600f;
+        --change-bg: #fbf0dc;
+        --new: #2f55c9;
+        --new-bg: #e4eafb;
+        --focus: #2f55c9;
+        color-scheme: light;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #12161d;
+          --surface: #1a2029;
+          --ink: #e7ebf1;
+          --muted: #9aa4b3;
+          --line: #2c3440;
+          --keep: #6cc79a;
+          --keep-bg: #16291f;
+          --change: #e3b15e;
+          --change-bg: #2e2414;
+          --new: #8fa8f5;
+          --new-bg: #1b2440;
+          --focus: #8fa8f5;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #12161d;
+        --surface: #1a2029;
+        --ink: #e7ebf1;
+        --muted: #9aa4b3;
+        --line: #2c3440;
+        --keep: #6cc79a;
+        --keep-bg: #16291f;
+        --change: #e3b15e;
+        --change-bg: #2e2414;
+        --new: #8fa8f5;
+        --new-bg: #1b2440;
+        --focus: #8fa8f5;
+        color-scheme: dark;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "IBM Plex Sans",
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+      code,
+      .mono {
+        font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 48px 24px 72px;
+      }
+
+      header h1 {
+        font-size: clamp(1.9rem, 4vw, 2.6rem);
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        margin: 0 0 12px;
+      }
+      .lead {
+        color: var(--muted);
+        max-width: 62ch;
+        margin: 0 0 28px;
+        font-size: 1.05rem;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        align-items: center;
+        margin-bottom: 40px;
+      }
+      .key {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 4px 12px 4px 10px;
+        border-radius: 999px;
+      }
+      .pill::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .pill.keep {
+        color: var(--keep);
+        background: var(--keep-bg);
+      }
+      .pill.change {
+        color: var(--change);
+        background: var(--change-bg);
+      }
+      .pill.new {
+        color: var(--new);
+        background: var(--new-bg);
+      }
+      .toggle {
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .toggle[aria-pressed="true"] {
+        border-color: var(--ink);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      /* lifecycle spine */
+      ol.lifecycle {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+      ol.lifecycle::before {
+        content: "";
+        position: absolute;
+        left: 17px;
+        top: 18px;
+        bottom: 18px;
+        width: 2px;
+        background: var(--line);
+      }
+      .phase {
+        position: relative;
+        padding-left: 60px;
+        margin-bottom: 36px;
+      }
+      .phase:last-child {
+        margin-bottom: 0;
+      }
+      .num {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--ink);
+        color: var(--bg);
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .phase h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 4px 0 4px;
+      }
+      .phase > p {
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 64ch;
+      }
+
+      .events {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .ev {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--st);
+        border-radius: 6px;
+        padding: 14px 16px 16px;
+        transition: opacity 0.2s ease;
+      }
+      .ev[data-status="keep"] {
+        --st: var(--keep);
+        --st-bg: var(--keep-bg);
+      }
+      .ev[data-status="change"] {
+        --st: var(--change);
+        --st-bg: var(--change-bg);
+      }
+      .ev[data-status="new"] {
+        --st: var(--new);
+        --st-bg: var(--new-bg);
+      }
+      .ev-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .ev-top code {
+        font-size: 0.86rem;
+        font-weight: 500;
+        word-break: break-word;
+      }
+      .tag {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--st);
+        background: var(--st-bg);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+      .ev .when {
+        margin: 0 0 10px;
+        font-size: 0.94rem;
+      }
+      .ev dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        font-size: 0.85rem;
+      }
+      .ev dt {
+        color: var(--muted);
+      }
+      .ev dd {
+        margin: 0;
+      }
+      .ev dd code {
+        font-size: 0.8rem;
+      }
+      .ev .todo {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--line);
+        font-size: 0.88rem;
+      }
+      .ev .todo strong {
+        color: var(--st);
+        font-weight: 600;
+      }
+      .ev.alt {
+        border-style: solid;
+      }
+      .branch {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+
+      body.focus-work .ev[data-status="keep"] {
+        opacity: 0.28;
+      }
+
+      /* dev notes */
+      section.dev {
+        margin-top: 64px;
+        border-top: 1px solid var(--line);
+        padding-top: 32px;
+      }
+      section.dev h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0 0 16px;
+      }
+      section.dev h3 {
+        font-size: 1.02rem;
+        font-weight: 600;
+        margin: 28px 0 8px;
+      }
+      section.dev p,
+      section.dev li {
+        max-width: 68ch;
+      }
+      section.dev ul {
+        padding-left: 20px;
+        margin: 0;
+      }
+      section.dev li {
+        margin-bottom: 6px;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px 40px;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 12px 8px 0;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        color: var(--muted);
+      }
+      td code {
+        font-size: 0.84rem;
+      }
+
+      @media (max-width: 560px) {
+        .wrap {
+          padding: 32px 16px 56px;
+        }
+        .phase {
+          padding-left: 48px;
+        }
+        ol.lifecycle::before {
+          left: 13px;
+        }
+        .num {
+          width: 28px;
+          height: 28px;
+          font-size: 0.85rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ev {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Knowledge request tracking</h1>
+        <p class="lead">
+          Every event we send to PostHog across a knowledge request’s life, from the moment the AI spots a gap
+          to the moment the requester closes it. Three events are new, four need a small change, and five are
+          already in place.
+        </p>
+        <div class="controls">
+          <div class="key" aria-label="Legend">
+            <span class="pill keep">Already in place</span>
+            <span class="pill change">Needs a change</span>
+            <span class="pill new">New event</span>
+          </div>
+          <button class="toggle" id="workToggle" aria-pressed="false">Show only what to build</button>
+        </div>
+      </header>
+
+      <main>
+        <ol class="lifecycle">
+          <li class="phase">
+            <span class="num" aria-hidden="true">1</span>
+            <h2>Gap detected</h2>
+            <p>
+              The AI notices missing knowledge in a chat and drafts a request. Nothing is sent to anyone yet.
+            </p>
+            <div class="events">
+              <article class="ev" data-status="change">
+                <div class="ev-top"><code>knowledge_gap_detected</code><span class="tag">Change</span></div>
+                <p class="when">Fires when the chat agent flags a gap and the draft request is created.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>
+                    Backend: <code>chat-agent.service.ts</code>, <code>getting-started-agent.service.ts</code>
+                  </dd>
+                  <dt>Has</dt>
+                  <dd><code>conversation_uuid</code>, <code>message_id</code></dd>
+                </dl>
+                <p class="todo">
+                  <strong>To do:</strong> add <code>knowledge_request_uuid</code>, so a gap can be linked to
+                  the request that follows.
+                </p>
+              </article>
+            </div>
+          </li>
+
+          <li class="phase">
+            <span class="num" aria-hidden="true">2</span>
+            <h2>Request sent</h2>
+            <p>The requester picks people or teams and clicks Request.</p>
+            <div class="events">
+              <article class="ev" data-status="change">
+                <div class="ev-top">
+                  <code>knowledge_request_created</code><span class="tag">Change</span>
+                </div>
+                <p class="when">Fires once, when the requester sends the request with its first assignees.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: <code>posthog.listener.ts</code></dd>
+                  <dt>Has</dt>
+                  <dd><code>knowledge_request_uuid</code>, <code>user_id</code></dd>
+                </dl>
+                <p class="todo">
+                  <strong>To do:</strong> add <code>assigned_to</code>: <code>users</code>,
+                  <code>teams</code> or <code>both</code>. Add <code>source</code>: where the request started,
+                  so new ways of creating requests can be compared later.
+                </p>
+              </article>
+            </div>
+          </li>
+
+          <li class="phase">
+            <span class="num" aria-hidden="true">3</span>
+            <h2>Routing</h2>
+            <p>
+              The request reaches assignees. They open it, ignore it, or reject it, and the requester can
+              change who’s assigned.
+            </p>
+            <div class="events">
+              <article class="ev" data-status="keep">
+                <div class="ev-top">
+                  <code>knowledge_request_opened</code><span class="tag">In place</span>
+                </div>
+                <p class="when">Fires the first time any assignee opens the request.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend</dd>
+                  <dt>Has</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>assignee_id</code>,
+                    <code>time_since_assigned_seconds</code>
+                  </dd>
+                </dl>
+              </article>
+              <article class="ev" data-status="keep">
+                <div class="ev-top">
+                  <code>knowledge_request_ignored</code><span class="tag">In place</span>
+                </div>
+                <p class="when">Fires 7 days after sending if no assignee has opened it.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend</dd>
+                  <dt>Has</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>assignee_id</code>,
+                    <code>assignee_team_ids</code>
+                  </dd>
+                </dl>
+              </article>
+              <article class="ev" data-status="change">
+                <div class="ev-top">
+                  <code>knowledge_request_assigned</code><span class="tag">Change</span>
+                </div>
+                <p class="when">
+                  Should fire when the requester changes assignees after the request was sent.
+                </p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: <code>posthog.listener.ts</code></dd>
+                  <dt>Has</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>assignee_id</code>,
+                    <code>assignee_team_ids</code>
+                  </dd>
+                </dl>
+                <p class="todo">
+                  <strong>To do:</strong> stop firing it together with <code>created</code>. Fire it only on
+                  later assignee edits by the requester.
+                </p>
+              </article>
+              <article class="ev" data-status="new">
+                <div class="ev-top"><code>knowledge_request_rejected</code><span class="tag">New</span></div>
+                <p class="when">Fires when a direct assignee rejects the request.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: reject endpoint</dd>
+                  <dt>Sends</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>reason</code>, <code>reassigned</code> (true /
+                    false)
+                  </dd>
+                </dl>
+              </article>
+              <article class="ev" data-status="change">
+                <div class="ev-top">
+                  <code>knowledge_request_reassigned</code><span class="tag">Change</span>
+                </div>
+                <p class="branch">Only when a rejection includes someone to pass it to</p>
+                <p class="when">Fires when the rejecting assignee picks someone else.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Frontend: reject modal</dd>
+                  <dt>Has</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>user_uuid</code>,
+                    <code>assigned_user_uuid</code>
+                  </dd>
+                </dl>
+                <p class="todo">
+                  <strong>To do:</strong> move it from the old direct-reassign action into the reject flow.
+                </p>
+              </article>
+            </div>
+          </li>
+
+          <li class="phase">
+            <span class="num" aria-hidden="true">4</span>
+            <h2>Answers</h2>
+            <p>
+              The AI may suggest an existing answer, and people publish their own. A request can collect
+              several answers.
+            </p>
+            <div class="events">
+              <article class="ev" data-status="keep">
+                <div class="ev-top">
+                  <code
+                    >system_contribution_created<br />system_contribution_approved<br />system_contribution_rejected</code
+                  ><span class="tag">In place</span>
+                </div>
+                <p class="when">
+                  Fire when the AI suggests an answer, and when the requester accepts or rejects it.
+                </p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: <code>system-contribution.service.ts</code></dd>
+                  <dt>Has</dt>
+                  <dd><code>knowledge_request_id</code>, <code>knowledge_fragment_id</code></dd>
+                </dl>
+              </article>
+              <article class="ev" data-status="new">
+                <div class="ev-top"><code>knowledge_request_answered</code><span class="tag">New</span></div>
+                <p class="when">Fires each time someone publishes an answer to the request.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: when the reply is published</dd>
+                  <dt>Sends</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>reply_number</code>,
+                    <code>answerer_role</code>, <code>seconds_open</code> (time since the request was sent)
+                  </dd>
+                </dl>
+              </article>
+            </div>
+          </li>
+
+          <li class="phase">
+            <span class="num" aria-hidden="true">5</span>
+            <h2>Closed</h2>
+            <p>The requester decides the request is done, or no longer needed.</p>
+            <div class="events">
+              <article class="ev" data-status="new">
+                <div class="ev-top"><code>knowledge_request_closed</code><span class="tag">New</span></div>
+                <p class="when">Fires when the requester resolves or cancels the request.</p>
+                <dl>
+                  <dt>Where</dt>
+                  <dd>Backend: resolve and cancel endpoints</dd>
+                  <dt>Sends</dt>
+                  <dd>
+                    <code>knowledge_request_uuid</code>, <code>outcome</code>, <code>reply_count</code>,
+                    <code>seconds_open</code> (time since the request was sent)
+                  </dd>
+                </dl>
+              </article>
+            </div>
+          </li>
+        </ol>
+
+        <section class="dev">
+          <h2>For the devs</h2>
+          <div class="cols">
+            <div>
+              <h3>Backend</h3>
+              <ul>
+                <li>
+                  Add <code>knowledge_request_rejected</code>, <code>knowledge_request_answered</code> and
+                  <code>knowledge_request_closed</code> to the allowed event names in
+                  <code>posthog.service.ts</code>.
+                </li>
+                <li>
+                  Map them in <code>posthog.listener.ts</code>, next to <code>created</code>,
+                  <code>opened</code> and <code>ignored</code>.
+                </li>
+                <li>Every new event carries <code>knowledge_request_uuid</code>.</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Frontend</h3>
+              <ul>
+                <li>
+                  Move <code>knowledge_request_reassigned</code> into the reject modal, firing only when a
+                  reassignment target is chosen.
+                </li>
+                <li>If someone can be reassigned to a team, add <code>assigned_team_uuid</code>.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Property values</h3>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Value</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td rowspan="5"><code>reason</code></td>
+                  <td><code>unclear_question</code></td>
+                  <td>Need more information / question not clear</td>
+                </tr>
+                <tr>
+                  <td><code>dont_know</code></td>
+                  <td>I don’t know the answer</td>
+                </tr>
+                <tr>
+                  <td><code>duplicate</code></td>
+                  <td>Duplicate request</td>
+                </tr>
+                <tr>
+                  <td><code>already_available</code></td>
+                  <td>Content already available</td>
+                </tr>
+                <tr>
+                  <td><code>none</code></td>
+                  <td>No reason chosen</td>
+                </tr>
+                <tr>
+                  <td rowspan="3"><code>answerer_role</code></td>
+                  <td><code>direct_assignee</code></td>
+                  <td>Assigned by name</td>
+                </tr>
+                <tr>
+                  <td><code>team_member</code></td>
+                  <td>Reached through an assigned team</td>
+                </tr>
+                <tr>
+                  <td><code>requester</code></td>
+                  <td>Answered their own request</td>
+                </tr>
+                <tr>
+                  <td rowspan="3"><code>assigned_to</code></td>
+                  <td><code>users</code></td>
+                  <td>Only people assigned</td>
+                </tr>
+                <tr>
+                  <td><code>teams</code></td>
+                  <td>Only teams assigned</td>
+                </tr>
+                <tr>
+                  <td><code>both</code></td>
+                  <td>People and teams</td>
+                </tr>
+                <tr>
+                  <td rowspan="2"><code>source</code></td>
+                  <td><code>chat</code></td>
+                  <td>Gap detected in the main chat</td>
+                </tr>
+                <tr>
+                  <td><code>getting_started_chat</code></td>
+                  <td>Gap detected in the Getting Started chat</td>
+                </tr>
+                <tr>
+                  <td rowspan="2"><code>outcome</code></td>
+                  <td><code>resolved</code></td>
+                  <td>Requester resolved it</td>
+                </tr>
+                <tr>
+                  <td><code>cancelled</code></td>
+                  <td>Requester cancelled it</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Left out on purpose</h3>
+          <ul>
+            <li>
+              A generic status-change event. <code>closed</code> covers the transitions that matter, and the
+              first answer implies In progress.
+            </li>
+            <li>
+              Tracking the cross-team warning and the lost-access draft. Both are edge cases; add them if they
+              turn out to happen often.
+            </li>
+            <li><code>knowledge_request_edited</code></li>
+          </ul>
+        </section>
+      </main>
+    </div>
+    <script>
+      (function () {
+        var btn = document.getElementById("workToggle");
+        btn.addEventListener("click", function () {
+          var on = btn.getAttribute("aria-pressed") !== "true";
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+          document.body.classList.toggle("focus-work", on);
+        });
+      })();
+    </script>
+  </body>
+</html>

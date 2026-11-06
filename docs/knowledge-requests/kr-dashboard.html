@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Knowledge requests dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f2f4f7;
+        --surface: #ffffff;
+        --ink: #18202c;
+        --muted: #5a6474;
+        --line: #d9dee6;
+        --track: #e8ecf1;
+        --bar-muted: #b9c2cf;
+        --accent: #2f55c9;
+        --accent-soft: #e4eafb;
+        --ok: #2f7a57;
+        --ok-soft: #e5f2eb;
+        --warn: #94600f;
+        --warn-soft: #fbf0dc;
+        --tip-bg: #18202c;
+        --tip-ink: #f2f4f7;
+        --tip-muted: #b9c2cf;
+        color-scheme: light;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #12161d;
+          --surface: #1a2029;
+          --ink: #e7ebf1;
+          --muted: #9aa4b3;
+          --line: #2c3440;
+          --track: #252c37;
+          --bar-muted: #4a5464;
+          --accent: #8fa8f5;
+          --accent-soft: #1b2440;
+          --ok: #6cc79a;
+          --ok-soft: #16291f;
+          --warn: #e3b15e;
+          --warn-soft: #2e2414;
+          --tip-bg: #e7ebf1;
+          --tip-ink: #12161d;
+          --tip-muted: #4a5464;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #12161d;
+        --surface: #1a2029;
+        --ink: #e7ebf1;
+        --muted: #9aa4b3;
+        --line: #2c3440;
+        --track: #252c37;
+        --bar-muted: #4a5464;
+        --accent: #8fa8f5;
+        --accent-soft: #1b2440;
+        --ok: #6cc79a;
+        --ok-soft: #16291f;
+        --warn: #e3b15e;
+        --warn-soft: #2e2414;
+        --tip-bg: #e7ebf1;
+        --tip-ink: #12161d;
+        --tip-muted: #4a5464;
+        color-scheme: dark;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "IBM Plex Sans",
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      code {
+        font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 0.85em;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 24px 72px;
+      }
+
+      /* header */
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 3.6vw, 2.4rem);
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+      .period {
+        font-size: 0.9rem;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: 6px 12px;
+        border-radius: 6px;
+      }
+      .lead {
+        color: var(--muted);
+        max-width: 64ch;
+        margin: 8px 0 20px;
+        font-size: 1.05rem;
+      }
+      .sample {
+        display: inline-block;
+        font-size: 0.875rem;
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 6px 12px;
+        border-radius: 6px;
+        margin-bottom: 32px;
+      }
+
+      /* cards */
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .kpis {
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 16px;
+      }
+      .two {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 20px 22px 22px;
+        position: relative;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+      .card h2 {
+        font-size: 1.08rem;
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.35;
+      }
+      .card .story {
+        color: var(--muted);
+        margin: 0 0 18px;
+        font-size: 0.94rem;
+        max-width: 60ch;
+      }
+      .section-gap {
+        margin-top: 16px;
+      }
+
+      .kpi .label {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 0;
+      }
+      .kpi .value {
+        font-size: 2rem;
+        font-weight: 600;
+        line-height: 1.1;
+        margin: 10px 0 4px;
+        letter-spacing: -0.01em;
+      }
+      .kpi .sub {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .big {
+        font-size: 1.9rem;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+      }
+      .big-sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px;
+        margin-bottom: 18px;
+      }
+
+      /* info tooltip */
+      .info {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .info-btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        cursor: help;
+        padding: 0;
+      }
+      .info-btn:hover,
+      .info-btn:focus-visible {
+        color: var(--ink);
+        border-color: var(--muted);
+      }
+      .info-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .tip {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 34px;
+        z-index: 20;
+        width: 320px;
+        background: var(--tip-bg);
+        color: var(--tip-ink);
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 0.86rem;
+        line-height: 1.5;
+        box-shadow: 0 8px 24px rgba(10, 15, 25, 0.22);
+      }
+      .info:hover .tip,
+      .info:focus-within .tip {
+        display: block;
+      }
+      .tip p {
+        margin: 0 0 8px;
+      }
+      .tip p:last-child {
+        margin-bottom: 0;
+      }
+      .tip .kind {
+        display: inline-block;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .tip .kind.decision {
+        background: var(--accent);
+        color: var(--tip-bg);
+      }
+      .tip .kind.behaviour {
+        background: var(--tip-muted);
+        color: var(--tip-bg);
+      }
+      .tip .ifthen {
+        border-left: 2px solid var(--tip-muted);
+        padding-left: 10px;
+      }
+      .tip .evs {
+        color: var(--tip-muted);
+      }
+      .tip code {
+        color: var(--tip-ink);
+      }
+
+      /* bars */
+      .bars {
+        display: grid;
+        gap: 10px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 34%) 1fr auto;
+        gap: 12px;
+        align-items: center;
+        font-size: 0.9rem;
+      }
+      .bar-row .name {
+        color: var(--ink);
+      }
+      .bar-row .num {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        min-width: 64px;
+        text-align: right;
+      }
+      .track {
+        height: 12px;
+        background: var(--track);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 3px;
+      }
+      .fill.muted {
+        background: var(--bar-muted);
+      }
+      .fill.warn {
+        background: var(--warn);
+      }
+      .fill.ok {
+        background: var(--ok);
+      }
+
+      /* funnel */
+      .funnel {
+        display: grid;
+        gap: 8px;
+      }
+      .f-row {
+        display: grid;
+        grid-template-columns: 170px 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+      .f-name {
+        font-size: 0.92rem;
+      }
+      .f-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .f-fill {
+        height: 36px;
+        background: var(--accent);
+        border-radius: 4px;
+        min-width: 8px;
+      }
+      .f-fill.first {
+        background: var(--bar-muted);
+      }
+      .f-val {
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+      .f-val strong {
+        font-size: 1.05rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .f-val span {
+        color: var(--muted);
+      }
+
+      /* stacked */
+      .stack {
+        display: flex;
+        height: 28px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        gap: 2px;
+      }
+      .stack div {
+        height: 100%;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-size: 0.86rem;
+        color: var(--muted);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        display: inline-block;
+      }
+      .legend b {
+        color: var(--ink);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .callout {
+        margin-top: 16px;
+        padding: 12px 14px;
+        background: var(--warn-soft);
+        color: var(--ink);
+        border-radius: 6px;
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        color: var(--warn);
+      }
+      .note {
+        margin-top: 14px;
+        font-size: 0.86rem;
+        color: var(--muted);
+      }
+      .sub-h {
+        font-size: 0.92rem;
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+      }
+
+      @media (max-width: 900px) {
+        .kpis {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .two {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 28px 16px 56px;
+        }
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .f-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        .bar-row {
+          grid-template-columns: 1fr auto;
+        }
+        .bar-row .track {
+          grid-column: 1 / -1;
+          grid-row: 2;
+        }
+        .tip {
+          position: fixed;
+          left: 16px;
+          right: 16px;
+          top: auto;
+          width: auto;
+          bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <h1>Knowledge requests</h1>
+        <span class="period">Last 30 days</span>
+      </div>
+      <p class="lead">
+        Are requests reaching the right people, getting answered, and getting closed? Each card answers one
+        question and says what we’d change based on it. Hover the info icon for the why.
+      </p>
+      <p class="sample">Sample data. Numbers are illustrative until the new events ship.</p>
+
+      <!-- KPIs -->
+      <div class="grid kpis">
+        <div class="card kpi">
+          <div class="card-head">
+            <p class="label">Requests sent</p>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track requests sent" aria-describedby="t-k1">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-k1">
+                <span class="kind behaviour">Behaviour</span>
+                <p>
+                  Tells us whether people use knowledge requests at all. Every other number on this page
+                  depends on this volume.
+                </p>
+                <p class="evs">Events: <code>knowledge_request_created</code></p>
+              </span>
+            </span>
+          </div>
+          <p class="value">38</p>
+          <p class="sub">from 96 detected gaps</p>
+        </div>
+        <div class="card kpi">
+          <div class="card-head">
+            <p class="label">Answered</p>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track answer rate" aria-describedby="t-k2">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-k2">
+                <span class="kind behaviour">Behaviour</span>
+                <p>
+                  Share of sent requests with at least one human answer. The core promise of the feature: ask,
+                  and someone answers.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_answered</code> with <code>reply_number = 1</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="value">63%</p>
+          <p class="sub">24 of 38 requests</p>
+        </div>
+        <div class="card kpi">
+          <div class="card-head">
+            <p class="label">Resolved</p>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track resolution rate" aria-describedby="t-k3">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-k3">
+                <span class="kind behaviour">Behaviour</span>
+                <p>
+                  Share of sent requests the requester marked as resolved. The gap between answered and
+                  resolved is the closure problem (see the last card).
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_closed</code> with <code>outcome = resolved</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="value">45%</p>
+          <p class="sub">17 of 38 requests</p>
+        </div>
+        <div class="card kpi">
+          <div class="card-head">
+            <p class="label">Time to resolve</p>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track time to resolve" aria-describedby="t-k4">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-k4">
+                <span class="kind behaviour">Behaviour</span>
+                <p>
+                  How long a typical request stays open before it’s resolved. We show the median, because one
+                  request left open for months would pull the average way up.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_closed</code>, median of <code>seconds_open</code> where
+                  <code>outcome = resolved</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="value">4.2 days</p>
+          <p class="sub">median (average is 9.6 days)</p>
+        </div>
+      </div>
+
+      <!-- Funnel -->
+      <section class="card">
+        <div class="card-head">
+          <h2>Where requests stall</h2>
+          <span class="info">
+            <button class="info-btn" aria-label="Why we track the journey" aria-describedby="t-f">
+              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+              </svg>
+            </button>
+            <span class="tip" role="tooltip" id="t-f">
+              <span class="kind behaviour">Behaviour</span>
+              <p>
+                The whole journey in one view. The biggest drop tells us which card below to look at first.
+              </p>
+              <p class="evs">
+                Events: <code>knowledge_gap_detected</code>, <code>knowledge_request_created</code>,
+                <code>knowledge_request_opened</code>, <code>knowledge_request_answered</code>,
+                <code>knowledge_request_closed</code>, joined on <code>knowledge_request_uuid</code>
+              </p>
+            </span>
+          </span>
+        </div>
+        <p class="story">
+          The biggest drop is at the start: most gaps the AI detects never become a request. Once a request is
+          sent, most get seen and answered, but fewer get closed.
+        </p>
+        <div class="funnel">
+          <div class="f-row">
+            <span class="f-name">Gap detected</span>
+            <div class="f-bar">
+              <div class="f-fill first" style="width: 72%"></div>
+              <span class="f-val"><strong>96</strong></span>
+            </div>
+          </div>
+          <div class="f-row">
+            <span class="f-name">Request sent</span>
+            <div class="f-bar">
+              <div class="f-fill" style="width: 28.5%"></div>
+              <span class="f-val"><strong>38</strong> <span>40% of gaps</span></span>
+            </div>
+          </div>
+          <div class="f-row">
+            <span class="f-name">Opened by an assignee</span>
+            <div class="f-bar">
+              <div class="f-fill" style="width: 22.5%"></div>
+              <span class="f-val"><strong>30</strong> <span>79% of sent</span></span>
+            </div>
+          </div>
+          <div class="f-row">
+            <span class="f-name">Answered</span>
+            <div class="f-bar">
+              <div class="f-fill" style="width: 18%"></div>
+              <span class="f-val"><strong>24</strong> <span>63% of sent</span></span>
+            </div>
+          </div>
+          <div class="f-row">
+            <span class="f-name">Resolved</span>
+            <div class="f-bar">
+              <div class="f-fill" style="width: 12.75%"></div>
+              <span class="f-val"><strong>17</strong> <span>45% of sent</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid two section-gap">
+        <!-- Gaps to requests -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Do detected gaps turn into requests?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track gap conversion" aria-describedby="t-1">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-1">
+                <span class="kind decision">Decision</span>
+                <p>
+                  Requests can only start from a gap the AI detects in chat, so this is our whole top of the
+                  funnel.
+                </p>
+                <p class="ifthen">
+                  If few gaps become requests, the AI flags things people don’t care about, or at the wrong
+                  moment: tune detection. If most do, it’s worth letting people start a request without a
+                  chat.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_gap_detected</code> (needs <code>knowledge_request_uuid</code>),
+                  <code>knowledge_request_created</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">Fewer than half of the gaps the AI flags are sent as a request.</p>
+          <div class="stat-row">
+            <div>
+              <div class="big">40%</div>
+              <div class="big-sub">of gaps become a request</div>
+            </div>
+            <div>
+              <div class="big">58</div>
+              <div class="big-sub">gaps never sent</div>
+            </div>
+          </div>
+          <div class="stack" aria-hidden="true">
+            <div style="width: 39.6%; background: var(--accent)"></div>
+            <div style="width: 60.4%; background: var(--bar-muted)"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background: var(--accent)"></i>Sent <b>38</b></span>
+            <span><i style="background: var(--bar-muted)"></i>Not sent <b>58</b></span>
+          </div>
+        </section>
+
+        <!-- Seen -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Do assignees see their requests?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track opened and ignored" aria-describedby="t-2">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-2">
+                <span class="kind decision">Decision</span>
+                <p>Separates “nobody saw it” from “saw it but didn’t answer”. They have different fixes.</p>
+                <p class="ifthen">
+                  If many requests are ignored, the problem is reach: improve notifications to assignees. If
+                  they’re opened but not answered, look at the rejection reasons instead.
+                </p>
+                <p>
+                  Counts the first assignee who opens it; with a team, it means someone looked, not everyone.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_opened</code> (<code>time_since_assigned_seconds</code>),
+                  <code>knowledge_request_ignored</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">
+            Most requests are opened within a working day. About one in six sits unopened for a week.
+          </p>
+          <div class="stat-row">
+            <div>
+              <div class="big">7 h</div>
+              <div class="big-sub">median time to open</div>
+            </div>
+            <div>
+              <div class="big">16%</div>
+              <div class="big-sub">ignored for 7 days</div>
+            </div>
+          </div>
+          <div class="stack" aria-hidden="true">
+            <div style="width: 79%; background: var(--accent)"></div>
+            <div style="width: 16%; background: var(--warn)"></div>
+            <div style="width: 5%; background: var(--bar-muted)"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background: var(--accent)"></i>Opened <b>30</b></span>
+            <span><i style="background: var(--warn)"></i>Ignored 7 days <b>6</b></span>
+            <span><i style="background: var(--bar-muted)"></i>Too recent <b>2</b></span>
+          </div>
+        </section>
+
+        <!-- Rejections -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Why do assignees reject requests?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track rejection reasons" aria-describedby="t-3">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-3">
+                <span class="kind decision">Decision</span>
+                <p>Each reason points to a different fix.</p>
+                <p class="ifthen">
+                  Question not clear: help requesters write clearer questions. Don’t know the answer: suggest
+                  better assignees. Duplicate or already available: check existing knowledge before a request
+                  is sent.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_rejected</code> (<code>reason</code>,
+                  <code>reassigned</code>), <code>knowledge_request_reassigned</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">
+            Unclear questions are the top reason, so the request itself is often the problem, not the
+            assignee.
+          </p>
+          <div class="bars">
+            <div class="bar-row">
+              <span class="name">Question not clear</span>
+              <div class="track"><div class="fill warn" style="width: 44%"></div></div>
+              <span class="num">4</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">Don’t know the answer</span>
+              <div class="track"><div class="fill" style="width: 33%"></div></div>
+              <span class="num">3</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">Duplicate request</span>
+              <div class="track"><div class="fill" style="width: 11%"></div></div>
+              <span class="num">1</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">Content already available</span>
+              <div class="track"><div class="fill" style="width: 11%"></div></div>
+              <span class="num">1</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">No reason given</span>
+              <div class="track"><div class="fill muted" style="width: 0%"></div></div>
+              <span class="num">0</span>
+            </div>
+          </div>
+          <p class="note">
+            5 of 9 rejections passed the request to someone else. 3 of those 5 got an answer.
+          </p>
+        </section>
+
+        <!-- Teams vs people -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Do teams work as well as naming a person?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we compare teams and people" aria-describedby="t-4">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-4">
+                <span class="kind decision">Decision</span>
+                <p>
+                  Teams are new. A team never answers; one of its members does. This compares how requests
+                  were routed.
+                </p>
+                <p class="ifthen">
+                  If team requests get answered less, people ignore requests not addressed to them by name:
+                  nudge requesters to pick a person. If they get answered more, suggest teams by default.
+                </p>
+                <p>A hint, not proof: vaguer questions might go to teams.</p>
+                <p class="evs">
+                  Events: <code>knowledge_request_created</code> (<code>assigned_to</code>),
+                  <code>knowledge_request_answered</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">
+            Requests sent only to teams get answered less often than requests sent to named people.
+          </p>
+          <div class="bars">
+            <div class="bar-row">
+              <span class="name">People only</span>
+              <div class="track"><div class="fill" style="width: 70%"></div></div>
+              <span class="num">70% of 20</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">People and teams</span>
+              <div class="track"><div class="fill" style="width: 67%"></div></div>
+              <span class="num">67% of 6</span>
+            </div>
+            <div class="bar-row">
+              <span class="name">Teams only</span>
+              <div class="track"><div class="fill warn" style="width: 50%"></div></div>
+              <span class="num">50% of 12</span>
+            </div>
+          </div>
+          <p class="note">Answer rate: share of requests with at least one answer.</p>
+        </section>
+
+        <!-- Answers -->
+        <section class="card">
+          <div class="card-head">
+            <h2>How do requests get answered?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track answers" aria-describedby="t-5">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-5">
+                <span class="kind decision">Decision</span>
+                <p>
+                  Shows how fast the first answer arrives, whether requests collect more than one answer, and
+                  who writes them.
+                </p>
+                <p class="ifthen">
+                  If almost every request ends with one answer, multiple answers aren’t adding value yet: hold
+                  off on discussion features. If second answers are common, invest in them.
+                </p>
+                <p class="evs">
+                  Events: <code>knowledge_request_answered</code> (<code>reply_number</code>,
+                  <code>answerer_role</code>, <code>seconds_open</code>)
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">
+            The first answer usually lands within two days. Two in five answered requests collect more than
+            one answer.
+          </p>
+          <div class="stat-row">
+            <div>
+              <div class="big">1.8 days</div>
+              <div class="big-sub">median time to first answer</div>
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <p class="sub-h">Answers per request</p>
+              <div class="bars">
+                <div class="bar-row">
+                  <span class="name">1</span>
+                  <div class="track"><div class="fill" style="width: 63%"></div></div>
+                  <span class="num">15</span>
+                </div>
+                <div class="bar-row">
+                  <span class="name">2</span>
+                  <div class="track"><div class="fill" style="width: 25%"></div></div>
+                  <span class="num">6</span>
+                </div>
+                <div class="bar-row">
+                  <span class="name">3 or more</span>
+                  <div class="track"><div class="fill" style="width: 12%"></div></div>
+                  <span class="num">3</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p class="sub-h">Who answers (36 answers)</p>
+              <div class="bars">
+                <div class="bar-row">
+                  <span class="name">Direct assignee</span>
+                  <div class="track"><div class="fill" style="width: 58%"></div></div>
+                  <span class="num">21</span>
+                </div>
+                <div class="bar-row">
+                  <span class="name">Team member</span>
+                  <div class="track"><div class="fill" style="width: 33%"></div></div>
+                  <span class="num">12</span>
+                </div>
+                <div class="bar-row">
+                  <span class="name">Requester</span>
+                  <div class="track"><div class="fill muted" style="width: 9%"></div></div>
+                  <span class="num">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI suggestions -->
+        <section class="card">
+          <div class="card-head">
+            <h2>Are AI-suggested answers useful?</h2>
+            <span class="info">
+              <button class="info-btn" aria-label="Why we track suggested answers" aria-describedby="t-6">
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                  <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+                </svg>
+              </button>
+              <span class="tip" role="tooltip" id="t-6">
+                <span class="kind decision">Decision</span>
+                <p>Measures how well the AI matches existing knowledge to a request.</p>
+                <p class="ifthen">
+                  If most suggestions are rejected, raise the matching bar, and reconsider whether a
+                  suggestion should move a request to In progress, since it can hide requests nobody has
+                  really answered.
+                </p>
+                <p class="evs">
+                  Events: <code>system_contribution_created</code>, <code>system_contribution_approved</code>,
+                  <code>system_contribution_rejected</code>
+                </p>
+              </span>
+            </span>
+          </div>
+          <p class="story">Requesters reject more suggestions than they accept.</p>
+          <div class="stat-row">
+            <div>
+              <div class="big">44%</div>
+              <div class="big-sub">accepted, of those reviewed</div>
+            </div>
+            <div>
+              <div class="big">18</div>
+              <div class="big-sub">suggestions made</div>
+            </div>
+          </div>
+          <div class="stack" aria-hidden="true">
+            <div style="width: 38.9%; background: var(--ok)"></div>
+            <div style="width: 50%; background: var(--warn)"></div>
+            <div style="width: 11.1%; background: var(--bar-muted)"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background: var(--ok)"></i>Accepted <b>7</b></span>
+            <span><i style="background: var(--warn)"></i>Rejected <b>9</b></span>
+            <span><i style="background: var(--bar-muted)"></i>Not reviewed <b>2</b></span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Closure -->
+      <section class="card section-gap">
+        <div class="card-head">
+          <h2>Do requesters close the loop?</h2>
+          <span class="info">
+            <button class="info-btn" aria-label="Why we track closure" aria-describedby="t-7">
+              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="4.5" r="1.1" fill="currentColor" />
+                <rect x="7" y="7" width="2" height="6" rx="1" fill="currentColor" />
+              </svg>
+            </button>
+            <span class="tip" role="tooltip" id="t-7">
+              <span class="kind decision">Decision</span>
+              <p>
+                The first version deliberately has no reminders and no auto-close. This card tells us if that
+                holds up.
+              </p>
+              <p class="ifthen">
+                If answered requests pile up without being closed, add a closure nudge or auto-close. If
+                requesters close them reliably, keep it as is.
+              </p>
+              <p class="evs">
+                Events: <code>knowledge_request_closed</code> (<code>outcome</code>,
+                <code>seconds_open</code>, <code>reply_count</code>), <code>knowledge_request_answered</code>
+              </p>
+            </span>
+          </span>
+        </div>
+        <p class="story">
+          Most answered requests get resolved, but some sit open with answers that nobody has reviewed.
+        </p>
+        <div class="stat-row">
+          <div>
+            <div class="big">4.2 days</div>
+            <div class="big-sub">median time to resolve</div>
+          </div>
+          <div>
+            <div class="big">9.6 days</div>
+            <div class="big-sub">average, pulled up by a few long ones</div>
+          </div>
+          <div>
+            <div class="big">7</div>
+            <div class="big-sub">answered but still open</div>
+          </div>
+        </div>
+        <div class="stack" aria-hidden="true">
+          <div style="width: 44.7%; background: var(--ok)"></div>
+          <div style="width: 10.5%; background: var(--bar-muted)"></div>
+          <div style="width: 18.4%; background: var(--warn)"></div>
+          <div
+            style="
+              width: 26.3%;
+              background: var(--track);
+              outline: 1px solid var(--line);
+              outline-offset: -1px;
+            "
+          ></div>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--ok)"></i>Resolved <b>17</b></span>
+          <span><i style="background: var(--bar-muted)"></i>Cancelled <b>4</b></span>
+          <span><i style="background: var(--warn)"></i>Open, has answers <b>7</b></span>
+          <span
+            ><i style="background: var(--track); outline: 1px solid var(--line)"></i>Open, no answers
+            <b>10</b></span
+          >
+        </div>
+        <div class="callout">
+          <strong>4 requests</strong> have answers but have been open for more than 14 days. That’s where a
+          closure nudge would help.
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
