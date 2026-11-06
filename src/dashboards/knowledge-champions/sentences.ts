@@ -38,7 +38,7 @@ export function reachSentence(input: { send: ISODate; clickers: number; activeSi
 
 export function questionsSentence(input: { daysElapsed: number; after: number; before: number }): string {
   const { daysElapsed, after, before } = input;
-  return `${afterPeriod(daysElapsed)}, people asked ${plural(after, "question")}, ${versusBefore(after, before, daysElapsed)}.`;
+  return `${afterPeriod(daysElapsed)}, people sent ${plural(after, "chat message")}, ${versusBefore(after, before, daysElapsed)}.`;
 }
 
 export function contributingSentence(input: {
@@ -76,5 +76,5 @@ export function clickersSentence(input: {
 }): string {
   const { clickers, actedWithin24h, contributedWithin7d } = input;
   if (clickers === 0) return "Nobody has clicked yet, so there is no one to follow.";
-  return `Of ${plural(clickers, "clicker")}, ${formatNumber(actedWithin24h)} asked or contributed within 24 hours and ${formatNumber(contributedWithin7d)} contributed within 7 days.`;
+  return `Of ${plural(clickers, "clicker")}, ${formatNumber(actedWithin24h)} sent a chat message or contributed within 24 hours and ${formatNumber(contributedWithin7d)} contributed within 7 days.`;
 }

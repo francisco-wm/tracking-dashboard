@@ -76,7 +76,7 @@ function View({ data }: { data: ComingBackData | null }) {
   const perActiveSeries: LineSeries[] = [
     {
       key: "questions",
-      label: "Questions per active person",
+      label: "Chat messages per active person",
       color: COLORS.one,
       values: data.questionsPerActive,
     },
@@ -116,7 +116,7 @@ function View({ data }: { data: ComingBackData | null }) {
             yet.
           </p>
           <p>
-            <strong>Per active person</strong> divides weekly questions and contributions by that week’s
+            <strong>Per active person</strong> divides weekly chat messages and contributions by that week’s
             active people. If activity rose only because more people showed up, these lines stay flat.
           </p>
           <WeeklyNote />
@@ -177,7 +177,7 @@ function View({ data }: { data: ComingBackData | null }) {
       </div>
       <ChartCard
         className="lg:col-span-4"
-        title="Questions and contributions per active person, weekly"
+        title="Chat messages and contributions per active person, weekly"
         subtitle="Weekly counts divided by that week’s active people"
         legend={<Legend items={perActiveSeries.map((s) => ({ label: s.label, color: s.color }))} />}
         table={weeklyTable(kc, perActiveSeries, "decimal")}
@@ -186,7 +186,7 @@ function View({ data }: { data: ComingBackData | null }) {
           {...weeklyChart(
             kc,
             perActiveSeries,
-            "Questions and contributions per active person per week",
+            "Chat messages and contributions per active person per week",
             "decimal",
           )}
         />

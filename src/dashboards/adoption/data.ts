@@ -62,7 +62,7 @@ export async function loadTotals(ctx: DashboardContext, ad: ADContext) {
 export interface PeopleWeek {
   week: ISODate;
   active: number;
-  /** Of the active people, how many asked a question that week. */
+  /** Of the active people, how many sent a chat message that week. */
   asking: number;
   contributing: number;
   /** A new listing or a re-list. */

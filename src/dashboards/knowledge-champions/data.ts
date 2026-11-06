@@ -228,7 +228,7 @@ export async function loadTrackingStart(ctx: DashboardContext, kc: KCContext) {
   });
   const r = records[0] ?? {};
   const keys = [
-    "question",
+    "chatMessage",
     "contribution",
     "newListing",
     "relist",

@@ -100,8 +100,8 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
             send. Everything is measured from each person’s first click.
           </p>
           <p>
-            <strong>Asked or contributed within 24 hours:</strong> a message in a regular chat or in a
-            knowledge-creation chat in the 24 hours after the click.{" "}
+            <strong>Sent a chat message or contributed within 24 hours:</strong> a message in a regular chat
+            or in a knowledge-creation chat in the 24 hours after the click.{" "}
             <strong>Contributed within 7 days:</strong> a message in a knowledge-creation chat in the 7 days
             after the click. <strong>Listed within 7 days:</strong> a new listing (draft to published) or a
             re-list in the 7 days after the click, before or after the contribution. People often publish
@@ -121,7 +121,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
           title="Did clickers act within 24 hours?"
           steps={[
             { label: "Clicked “Share your knowledge”", count: rows.length },
-            { label: "Asked a question or contributed within 24 hours", count: acted },
+            { label: "Sent a chat message or contributed within 24 hours", count: acted },
           ]}
         />
       </div>
@@ -160,7 +160,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
                 <TableRow>
                   <TableHeaderCell>Clicker</TableHeaderCell>
                   <TableHeaderCell>First click</TableHeaderCell>
-                  <TableHeaderCell>Questions</TableHeaderCell>
+                  <TableHeaderCell>Chat messages</TableHeaderCell>
                   <TableHeaderCell>Contributions</TableHeaderCell>
                   <TableHeaderCell>New listings</TableHeaderCell>
                   <TableHeaderCell>Re-lists</TableHeaderCell>

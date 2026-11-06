@@ -41,10 +41,10 @@ describe("section sentences", () => {
 
   it("questions", () => {
     expect(questionsSentence({ daysElapsed: 1, after: 72, before: 16 })).toBe(
-      "On send day, people asked 72 questions, up from 16 on the matching day before.",
+      "On send day, people sent 72 chat messages, up from 16 on the matching day before.",
     );
     expect(questionsSentence({ daysElapsed: 3, after: 1, before: 0 })).toBe(
-      "In the first 3 days after the send, people asked 1 question, up from 0 in the same days before.",
+      "In the first 3 days after the send, people sent 1 chat message, up from 0 in the same days before.",
     );
   });
 
@@ -68,7 +68,7 @@ describe("section sentences", () => {
 
   it("clickers", () => {
     expect(clickersSentence({ clickers: 4, actedWithin24h: 1, contributedWithin7d: 1 })).toBe(
-      "Of 4 clickers, 1 asked or contributed within 24 hours and 1 contributed within 7 days.",
+      "Of 4 clickers, 1 sent a chat message or contributed within 24 hours and 1 contributed within 7 days.",
     );
     expect(clickersSentence({ clickers: 0, actedWithin24h: 0, contributedWithin7d: 0 })).toBe(
       "Nobody has clicked yet, so there is no one to follow.",

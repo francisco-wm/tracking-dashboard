@@ -51,8 +51,8 @@ there instead of writing a variant inside a dashboard.
 
 | Metric                  | Definition                                                                                          |
 | ----------------------- | --------------------------------------------------------------------------------------------------- |
-| Questions asked         | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                   |
-| People asking           | Unique persons with a question                                                                      |
+| Chat messages sent      | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                   |
+| People chatting         | Unique persons with a chat message                                                                  |
 | Contributions           | `knowledge_shared` (count; one per message in a knowledge-creation chat). Creation, not consumption |
 | People contributing     | Unique persons with a contribution                                                                  |
 | New knowledge listed    | `kp_status_changed` where `from_status = 'draft'` and `to_status = 'published'`                     |
@@ -90,9 +90,10 @@ Weekly lifecycle, on `$pageview`, Monday weeks:
 
 Clicker detail, per person, from their first click after the send:
 
-- Questions, contributions, new listings and re-lists in the 7 days before vs the 7 days after.
-- Flags: asked or contributed within 24h; contributed within 7 days; listed within 7 days (a new listing or
-  a re-list, in any order relative to the contribution). Don't require contribution → listing order:
+- Chat messages, contributions, new listings and re-lists in the 7 days before vs the 7 days after.
+- Flags: sent a chat message or contributed within 24h; contributed within 7 days; listed within 7 days (a
+  new listing or a re-list, in any order relative to the contribution). Don't require contribution →
+  listing order:
   people often publish before their first `knowledge_shared` fires, and the first message of a
   knowledge-creation chat may have no `knowledge_shared` at all.
 - The 7-day funnel's last step counts people who both contributed and listed, so it never exceeds the step
@@ -214,7 +215,8 @@ recipients.
   weeks" and stay out of the headline rate.
 - Requests per 100 active people (per person is too small to read): `knowledge_request_created` and
   answers (`knowledge_request_answered`, or `_completed` from the old backend) in the week, over that week's
-  active people. Shares (asked, contributed, listed) count only active people, so they never exceed 100%.
+  active people. Shares (sent a chat message, contributed, listed) count only active people, so they never
+  exceed 100%.
 - Organisation slugs are customer names: hidden behind "Show names" (`?names=1`), "Organisation 1", ... by
   default.
 

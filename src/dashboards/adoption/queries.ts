@@ -31,8 +31,8 @@ WHERE ${M.appActive}
 }
 
 /**
- * Per week: active people, and how many of them asked a question, contributed
- * or listed knowledge (a new listing or a re-list) that week. Only active
+ * Per week: active people, and how many of them sent a chat message,
+ * contributed or listed knowledge (a new listing or a re-list) that week. Only active
  * people count, so a share never exceeds 100%. Values: start, end (exclusive).
  */
 export function weeklyPeople(people: string): string {
@@ -48,7 +48,7 @@ FROM (
     person_id,
     toStartOfWeek(timestamp, 1) AS week,
     countIf(${M.appActive}) > 0 AS was_active,
-    countIf(${M.question}) > 0 AS asked,
+    countIf(${M.chatMessage}) > 0 AS asked,
     countIf(${M.contribution}) > 0 AS contributed,
     countIf((${M.newListing}) OR (${M.relist})) > 0 AS listed
   FROM events

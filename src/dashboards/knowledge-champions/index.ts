@@ -13,7 +13,7 @@ export const knowledgeChampions: DashboardModule = {
   slug: DASHBOARD_SLUG,
   title: "Knowledge Champions email",
   description:
-    "Does the quarterly email celebrating the top knowledge sharers change behaviour? Questions, contributions and people coming back, before vs after each send.",
+    "Does the quarterly email celebrating the top knowledge sharers change behaviour? Chat messages, contributions and people coming back, before vs after each send.",
   headerNote(ctx) {
     const send = latestSend(SEND_DATES, ctx.today);
     if (!send) return null;

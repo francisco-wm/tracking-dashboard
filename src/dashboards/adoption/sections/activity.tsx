@@ -61,7 +61,7 @@ function View({ data, ctx }: { data: ActivityData; ctx: DashboardContext }) {
   const shares: LineSeries[] = [
     {
       key: "asking",
-      label: "Asked a question",
+      label: "Sent a chat message",
       color: COLORS.one,
       values: people.map((p) => share(p.asking, p.active)),
       emptyLabel: NOBODY,
@@ -108,10 +108,10 @@ function View({ data, ctx }: { data: ActivityData; ctx: DashboardContext }) {
           </p>
           <p>
             <strong>Shares</strong> count active people who did something at least once that week:{" "}
-            <strong>asked a question</strong> (a message in a regular chat), <strong>contributed</strong> (
-            <code>knowledge_shared</code>, a message in a knowledge-creation chat) or{" "}
-            <strong>listed knowledge</strong> (a fragment listed for the first time, or an edit listed). A
-            person can do all three.
+            <strong>sent a chat message</strong> (in a regular chat, not a knowledge-creation one),{" "}
+            <strong>contributed</strong> (<code>knowledge_shared</code>, a message in a knowledge-creation
+            chat) or <strong>listed knowledge</strong> (a fragment listed for the first time, or an edit
+            listed). A person can do all three.
           </p>
           <ActiveNote />
           <WeeksNote period={period} />
@@ -131,7 +131,7 @@ function View({ data, ctx }: { data: ActivityData; ctx: DashboardContext }) {
           caption={`${week}: ${plural(le.requestsAnswered, "answer")}`}
         />
         <StatTile
-          title="Active people who asked a question"
+          title="Active people who sent a chat message"
           value={pct(share(lp.asking, lp.active))}
           caption={`${week}: ${formatNumber(lp.asking)} of ${formatNumber(lp.active)}`}
         />
@@ -172,7 +172,7 @@ function View({ data, ctx }: { data: ActivityData; ctx: DashboardContext }) {
       <ChartCard
         className="lg:col-span-6"
         title="What active people did, weekly"
-        subtitle="Share of each week’s active people who asked, contributed or listed at least once"
+        subtitle="Share of each week’s active people who sent a chat message, contributed or listed at least once"
         legend={<Legend items={shares.map((s) => ({ label: s.label, color: s.color }))} />}
         table={{
           columns: ["Week of", "Active people", ...shares.map((s) => s.label)],
@@ -190,7 +190,7 @@ function View({ data, ctx }: { data: ActivityData; ctx: DashboardContext }) {
           {...weeklyChart(
             period,
             shares,
-            "Share of active people who asked, contributed or listed per week",
+            "Share of active people who sent a chat message, contributed or listed per week",
             "percent",
           )}
         />

@@ -61,10 +61,10 @@ function View({ data }: { data: QuestionsData | null }) {
   const today = pairs[daysElapsed - 1];
 
   const questionsSeries = [
-    { key: "questions", label: "Questions asked", color: COLORS.one, values: data.weeklyQuestions },
+    { key: "questions", label: "Chat messages sent", color: COLORS.one, values: data.weeklyQuestions },
   ];
   const askingSeries = [
-    { key: "asking", label: "People asking", color: COLORS.one, values: data.weeklyAsking },
+    { key: "asking", label: "People chatting", color: COLORS.one, values: data.weeklyAsking },
   ];
 
   return (
@@ -73,13 +73,13 @@ function View({ data }: { data: QuestionsData | null }) {
       howMeasured={
         <>
           <p>
-            <strong>Questions asked</strong> counts every message sent in a regular chat (
+            <strong>Chat messages sent</strong> counts every message sent in a regular chat (
             <code>chat_message_sent</code> with chat type <code>chat</code>). The running totals are matched
             day by day: day 1 is the send day for “after” and the first of the 14 days before the send for
             “before”. The after line stops at today.
           </p>
           <p>
-            <strong>People asking</strong> counts unique people who sent at least one such message. “Before,
+            <strong>People chatting</strong> counts unique people who sent at least one such message. “Before,
             same days” covers as many days of the before window as have passed since the send, so the two
             numbers stay comparable while the after window fills up.
           </p>
@@ -90,18 +90,22 @@ function View({ data }: { data: QuestionsData | null }) {
     >
       <ChartCard
         className="lg:col-span-4"
-        title="Questions asked, running total"
+        title="Chat messages sent, running total"
         subtitle="Messages in regular chats, matched by day after the send"
         legend={<Legend items={beforeAfterLegend(kc.windows)} />}
-        table={beforeAfterTable(pairs, "Questions")}
+        table={beforeAfterTable(pairs, "Chat messages")}
       >
         <LineChart
-          {...beforeAfterChart(pairs, kc.windows, "Questions asked, running total, before vs after the send")}
+          {...beforeAfterChart(
+            pairs,
+            kc.windows,
+            "Chat messages sent, running total, before vs after the send",
+          )}
         />
       </ChartCard>
       <div className="lg:col-span-2">
         <StatCompare
-          title="People asking questions"
+          title="People chatting"
           after={asking.after}
           beforeMatched={asking.beforeMatched}
           beforeFull={asking.beforeFull}
@@ -111,19 +115,19 @@ function View({ data }: { data: QuestionsData | null }) {
       </div>
       <ChartCard
         className="lg:col-span-3"
-        title="Questions asked, weekly"
+        title="Chat messages sent, weekly"
         subtitle="Last 6 months, Monday-start weeks"
         table={weeklyTable(kc, questionsSeries)}
       >
-        <LineChart {...weeklyChart(kc, questionsSeries, "Questions asked per week")} />
+        <LineChart {...weeklyChart(kc, questionsSeries, "Chat messages sent per week")} />
       </ChartCard>
       <ChartCard
         className="lg:col-span-3"
-        title="People asking, weekly"
+        title="People chatting, weekly"
         subtitle="Unique people per week"
         table={weeklyTable(kc, askingSeries)}
       >
-        <LineChart {...weeklyChart(kc, askingSeries, "People asking questions per week")} />
+        <LineChart {...weeklyChart(kc, askingSeries, "People chatting per week")} />
       </ChartCard>
     </SectionFrame>
   );
@@ -131,7 +135,7 @@ function View({ data }: { data: QuestionsData | null }) {
 
 export const questions: SectionModule<QuestionsData | null> = {
   slug: "questions",
-  label: "Questions",
+  label: "Chat messages",
   load,
   View,
 };

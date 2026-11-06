@@ -14,7 +14,7 @@ export const HISTORY_START = "2020-01-01 00:00:00";
 export const WINDOW_DAILY = `
 SELECT
   toDate(timestamp) AS day,
-  countIf(${M.question}) AS questions,
+  countIf(${M.chatMessage}) AS questions,
   countIf(${M.contribution}) AS contributions,
   countIf(${M.newListing}) AS new_listings,
   countIf(${M.relist}) AS relists,
@@ -34,9 +34,9 @@ ORDER BY day`;
  */
 export const WINDOW_UNIQUES = `
 SELECT
-  uniqIf(person_id, ${M.question} AND timestamp < toDateTime({matched_end})) AS asking_before_matched,
-  uniqIf(person_id, ${M.question} AND timestamp < toDateTime({send})) AS asking_before,
-  uniqIf(person_id, ${M.question} AND timestamp >= toDateTime({send})) AS asking_after,
+  uniqIf(person_id, ${M.chatMessage} AND timestamp < toDateTime({matched_end})) AS asking_before_matched,
+  uniqIf(person_id, ${M.chatMessage} AND timestamp < toDateTime({send})) AS asking_before,
+  uniqIf(person_id, ${M.chatMessage} AND timestamp >= toDateTime({send})) AS asking_after,
   uniqIf(person_id, ${M.contribution} AND timestamp < toDateTime({matched_end})) AS contributing_before_matched,
   uniqIf(person_id, ${M.contribution} AND timestamp < toDateTime({send})) AS contributing_before,
   uniqIf(person_id, ${M.contribution} AND timestamp >= toDateTime({send})) AS contributing_after,
@@ -73,8 +73,8 @@ ORDER BY day`;
 export const WEEKLY = `
 SELECT
   toStartOfWeek(timestamp, 1) AS week,
-  countIf(${M.question}) AS questions,
-  uniqIf(person_id, ${M.question}) AS people_asking,
+  countIf(${M.chatMessage}) AS questions,
+  uniqIf(person_id, ${M.chatMessage}) AS people_asking,
   countIf(${M.contribution}) AS contributions,
   uniqIf(person_id, ${M.contribution}) AS contributors,
   countIf(${M.newListing}) AS new_listings,
@@ -143,7 +143,7 @@ ORDER BY day`;
 /** When each metric was first tracked (1970-01-01 = never). Values: history_start, end. */
 export const TRACKING_START = `
 SELECT
-  minIf(timestamp, ${M.question}) AS question,
+  minIf(timestamp, ${M.chatMessage}) AS chatMessage,
   minIf(timestamp, ${M.contribution}) AS contribution,
   minIf(timestamp, ${M.newListing}) AS newListing,
   minIf(timestamp, ${M.relist}) AS relist,
@@ -184,7 +184,7 @@ FROM (
     minIf(timestamp, ${M.click} AND timestamp >= toDateTime({send})) AS first_click,
     groupArray(tuple(
       multiIf(
-        ${M.question}, 'question',
+        ${M.chatMessage}, 'question',
         ${M.contribution}, 'contribution',
         ${M.newListing}, 'new_listing',
         ${M.relist}, 'relist',

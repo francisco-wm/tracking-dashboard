@@ -2,7 +2,8 @@
 // Add a metric here instead of writing a variant inside a dashboard.
 
 export const METRIC_SQL = {
-  question: `event = 'chat_message_sent' AND properties.chat_type = 'chat'`,
+  /** A message in a regular chat, not a knowledge-creation chat. */
+  chatMessage: `event = 'chat_message_sent' AND properties.chat_type = 'chat'`,
   contribution: `event = 'knowledge_shared'`,
   newListing: `event = 'kp_status_changed' AND properties.from_status = 'draft' AND properties.to_status = 'published'`,
   relist: `event = 'knowledge_piece_republished'`,
