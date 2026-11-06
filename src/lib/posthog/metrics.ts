@@ -9,6 +9,13 @@ export const METRIC_SQL = {
   editStarted: `event = 'knowledge_piece_edit_started'`,
   click: `event = 'reach_email_cta_clicked' AND properties.source = 'reach_email'`,
   active: `event = '$pageview'`,
+  /**
+   * A page view inside an organisation's app: someone signed in and using the
+   * product. Paths are /o/<slug>/… since July 2026 and /dashboard/<slug>/…
+   * before. Sign-in, sign-up and setup pages don't count: most of their
+   * visitors never sign in.
+   */
+  appActive: `event = '$pageview' AND match(properties.$pathname, '^/(o|dashboard)/[^/]+') AND NOT match(properties.$pathname, '^/o/[^/]+/setup')`,
   /** A view of an organisation's home page, /o/<slug>, where the home widgets live. */
   homeView: `event = '$pageview' AND match(properties.$pathname, '^/o/[^/]+/?$')`,
   widgetClick: `event = 'dashboard_widget_clicked'`,
@@ -48,6 +55,9 @@ export const SUGGESTION_REQUEST_ID = `properties.knowledge_request_id`;
 
 /** The fragment (knowledge piece) an edit, re-list or status change belongs to. */
 export const FRAGMENT_ID = `properties.knowledge_piece_uuid`;
+
+/** The organisation an `appActive` page view belongs to: its slug in the path. */
+export const ORG_SLUG = `extract(properties.$pathname, '^/(?:o|dashboard)/([^/]+)')`;
 
 /** Which home widget a widget event came from. */
 export const WIDGET_ID = `properties.widget_id`;

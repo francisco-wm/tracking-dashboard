@@ -25,11 +25,11 @@ Never exclude internal or test users. No `filterTestAccounts`, no `$internal`/em
 cohorts that drop staff. Numbers will be equal to or higher than PostHog dashboards that filter them out,
 and that is intended. Each dashboard's "How this is measured" note says so (`EveryoneCounted`).
 
-The one exception is opt-in: Fragment editing and Home widgets have an "Include internal users" switch (on
-by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's `config.ts`: cohort 61287
-"Wingmaite internal users" in production (PostHog's own test-account filter), a `@wingmaite.com` email in
-staging (no cohort there). Keep the two definitions identical. Don't add exclusions anywhere else unless
-asked.
+The one exception is opt-in: Fragment editing, Home widgets, Knowledge requests and Adoption have an "Include
+internal users" switch (on by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's
+`config.ts`: cohort 61287 "Wingmaite internal users" in production (PostHog's own test-account filter), a
+`@wingmaite.com` email in staging (no cohort there). Keep the definitions identical. Don't add exclusions
+anywhere else unless asked.
 
 ## Other hard rules
 
@@ -61,6 +61,8 @@ there instead of writing a variant inside a dashboard.
 | Email clicks            | `reach_email_cta_clicked` where `properties.source = 'reach_email'`                                 |
 | Clickers                | Unique persons with an email click                                                                  |
 | Active people           | Unique persons with a `$pageview`                                                                   |
+| Active in the app       | `$pageview` on `/o/<slug>/…` (`/dashboard/<slug>/…` before July 2026), not `/o/<slug>/setup`        |
+| Active organisations    | Distinct `<slug>` in the path of in-app page views (`ORG_SLUG`)                                     |
 | Edits started           | `knowledge_piece_edit_started`; fragments are keyed by `properties.knowledge_piece_uuid`            |
 | Edited fragments listed | Unique fragments with a re-list                                                                     |
 | Home-page views         | `$pageview` where `$pathname` is `/o/<slug>`, the organisation home page and the widgets' only home |
@@ -192,6 +194,29 @@ recipients.
   answer's `seconds_open`, and `seconds_open` on resolved closes.
 - HogQL: an unmatched LEFT JOIN side reads as defaults (1970, 0), not NULL, so joined events are collected
   into arrays. `quantileExactIf` and correlated subqueries aren't supported.
+
+## Adoption
+
+- The baseline for the adoption question: weekly active people, who comes back after their first two weeks,
+  and knowledge requests per active person, plus active organisations.
+- Active means "Active in the app" (`METRIC_SQL.appActive`), not any `$pageview`: most people who only see
+  `/signin`, `/login`, `/` or setup pages never sign in, and counting them doubled some weeks (Dec 2025: 372
+  people with a page view, 27 in the app). The same filter gives the organisation, from the path.
+- Period: `?range=13|26|52` Monday weeks (default 26), this week included and drawn lighter. Headline numbers
+  use last week, the latest complete one, and compare it with 4 weeks before.
+- The weekly active people chart adds a trailing 4-week average (`AVERAGE_WEEKS`, 28 days: the points are
+  weeks, so 30 days isn't a whole number of them). It starts once 4 full weeks exist in the period and leaves
+  out this week, whose partial count would pull it down. A switch on the chart hides it (client state in
+  `active-chart.tsx`, shown by default, not in the URL).
+- New = first in-app day ever (all history), grouped by its Monday week; it matches "New" in the lifecycle.
+  Came back after two weeks = active again on day 15 to 28, the first day being day 1. A start week gets a
+  rate only once its Sunday starter has had day 28; until then its people are "still in their first four
+  weeks" and stay out of the headline rate.
+- Requests per 100 active people (per person is too small to read): `knowledge_request_created` and
+  answers (`knowledge_request_answered`, or `_completed` from the old backend) in the week, over that week's
+  active people. Shares (asked, contributed, listed) count only active people, so they never exceed 100%.
+- Organisation slugs are customer names: hidden behind "Show names" (`?names=1`), "Organisation 1", ... by
+  default.
 
 ## Building a dashboard
 
