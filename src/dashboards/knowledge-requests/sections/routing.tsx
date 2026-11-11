@@ -10,12 +10,12 @@ import { COLORS, IGNORE_DAYS, REJECT_REASONS, type DataKey } from "../config";
 import { krContext, loadRequests, loadTracking } from "../data";
 import { share, trackedSince, type Filters, type Period } from "../filters";
 import {
-  answerRateByRouting,
   formatDuration,
   rejectionSummary,
+  requestsByAssignment,
   seenSummary,
+  type AssignmentGroup,
   type RejectionSummary,
-  type RoutingRate,
   type SeenSummary,
 } from "../lifecycle";
 import { plural, routingSentence, trackingNote, waitingSentence } from "../sentences";
@@ -27,8 +27,8 @@ interface RoutingData {
   filters: Filters;
   seen: { requests: number; summary: SeenSummary } | null;
   rejections: { summary: RejectionSummary; answersTracked: boolean } | null;
-  routing: { rates: RoutingRate[] } | null;
-  waiting: { seen: DataKey[]; rejections: DataKey[]; routing: DataKey[] };
+  assignment: { groups: AssignmentGroup[] } | null;
+  waiting: { seen: DataKey[]; rejections: DataKey[]; assignment: DataKey[] };
   /** Data used here that first appeared inside the range. */
   note: string | null;
 }
@@ -40,7 +40,7 @@ async function load(ctx: DashboardContext) {
   const { rows } = requests;
   const SEEN: DataKey[] = ["sent", "opened", "ignored"];
   const REJECTIONS: DataKey[] = ["sent", "rejected"];
-  const ROUTING: DataKey[] = ["sent", "assignedTo", "answered"];
+  const ASSIGNMENT: DataKey[] = ["sent", "assignedTo"];
 
   return {
     data: {
@@ -52,11 +52,11 @@ async function load(ctx: DashboardContext) {
       rejections: isTracked(status, REJECTIONS)
         ? { summary: rejectionSummary(rows), answersTracked: status.answered !== null }
         : null,
-      routing: isTracked(status, ROUTING) ? { rates: answerRateByRouting(rows) } : null,
+      assignment: isTracked(status, ASSIGNMENT) ? { groups: requestsByAssignment(rows) } : null,
       waiting: {
         seen: missing(status, SEEN),
         rejections: missing(status, REJECTIONS),
-        routing: missing(status, ROUTING),
+        assignment: missing(status, ASSIGNMENT),
       },
       note: trackingNote(
         startedInPeriod(status, kr.period, [
@@ -76,7 +76,7 @@ async function load(ctx: DashboardContext) {
 const pct = (value: number | null) => (value === null ? "–" : formatNumber(value, "percent"));
 
 function View({ data, ctx }: { data: RoutingData; ctx: DashboardContext }) {
-  const { period, filters, seen, rejections, routing, waiting } = data;
+  const { period, filters, seen, rejections, assignment, waiting } = data;
   const D = IGNORE_DAYS;
 
   return (
@@ -121,11 +121,10 @@ function View({ data, ctx }: { data: RoutingData; ctx: DashboardContext }) {
             sending.
           </p>
           <p>
-            <strong>Teams or people</strong> compares how requests were assigned (<code>assigned_to</code> on{" "}
-            <code>knowledge_request_created</code>: people, teams or both) by the share that got at least one
-            answer. A team never answers itself; one of its members does. If team requests are answered less,
-            people may ignore requests not addressed to them by name. It’s a hint, not proof: vaguer questions
-            might go to teams.
+            <strong>Assigned to</strong> counts requests by how they were assigned (<code>assigned_to</code>{" "}
+            on <code>knowledge_request_created</code>): named people only, teams only, or both. With a team,
+            the request reaches a group and one member answers; a team never answers itself. How often each
+            kind gets answered is on the Answers tab.
           </p>
           <RequestsNote />
           <MediansNote />
@@ -237,30 +236,26 @@ function View({ data, ctx }: { data: RoutingData; ctx: DashboardContext }) {
         </WaitingCard>
       )}
 
-      {routing ? (
-        <BarList
+      {assignment ? (
+        <ShareBar
           className="lg:col-span-3"
-          title="Do teams work as well as naming a person?"
-          subtitle={`Share with at least one answer · ${spanLabel(period)}`}
-          items={routing.rates.map((r) => ({
-            key: r.assignedTo,
-            label: r.label,
-            share: r.requests > 0 ? r.answered / r.requests : 0,
-            display: `${pct(share(r.answered, r.requests))} of ${formatNumber(r.requests)}`,
+          title="Who are requests assigned to?"
+          subtitle={spanLabel(period)}
+          unit="Requests"
+          segments={assignment.groups.map((g, i) => ({
+            key: g.assignedTo,
+            label: g.label,
+            count: g.requests,
+            color: `var(--color-chart-${i + 1})`,
           }))}
-          table={{
-            columns: ["Assigned to", "Requests", "Answered"],
-            rows: routing.rates.map((r) => [r.label, r.requests, r.answered]),
-          }}
-          empty="No requests."
         />
       ) : (
         <WaitingCard
           className="lg:col-span-3"
-          title="Do teams work as well as naming a person?"
-          keys={waiting.routing}
+          title="Who are requests assigned to?"
+          keys={waiting.assignment}
         >
-          The share answered for requests assigned to people, to teams, or to both.
+          How many requests go to named people, to teams, or to both.
         </WaitingCard>
       )}
     </SectionFrame>

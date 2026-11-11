@@ -191,15 +191,15 @@ export function rejectionSummary(rows: RequestRow[]): RejectionSummary {
   };
 }
 
-export interface RoutingRate {
+export interface AssignmentGroup {
   assignedTo: string;
   label: string;
   requests: number;
   answered: number;
 }
 
-/** Share answered per way of assigning: people, teams or both. Requests without the property are left out. */
-export function answerRateByRouting(rows: RequestRow[]): RoutingRate[] {
+/** Requests and how many got an answer, per way of assigning: people, teams or both. Requests without the property are left out. */
+export function requestsByAssignment(rows: RequestRow[]): AssignmentGroup[] {
   const known = Object.keys(ASSIGNED_TO);
   const values = [...new Set([...known, ...rows.map((r) => r.assignedTo).filter(Boolean)])];
   return values.map((assignedTo) => {

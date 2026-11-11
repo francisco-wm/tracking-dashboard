@@ -5,6 +5,7 @@ import { StatTile } from "@/components/charts/stat-compare";
 import { SectionFrame } from "@/components/shell/section-frame";
 import { oldest, type DashboardContext, type SectionModule } from "@/dashboards/types";
 
+import { BarList } from "../charts/bar-list";
 import { ShareBar } from "../charts/share-bar";
 import { WaitingCard } from "../charts/waiting";
 import { COLORS, type DataKey } from "../config";
@@ -13,8 +14,10 @@ import { share, trackedSince, type Filters, type Period } from "../filters";
 import {
   answerSummary,
   formatDuration,
+  requestsByAssignment,
   suggestionSummary,
   type AnswerSummary,
+  type AssignmentGroup,
   type SuggestionSummary,
 } from "../lifecycle";
 import { answersSentence, plural, trackingNote } from "../sentences";
@@ -25,8 +28,9 @@ interface AnswersData {
   period: Period;
   filters: Filters;
   answers: { summary: AnswerSummary } | null;
+  assignment: { groups: AssignmentGroup[] } | null;
   suggestions: { summary: SuggestionSummary } | null;
-  waiting: { answers: DataKey[]; suggestions: DataKey[] };
+  waiting: { answers: DataKey[]; assignment: DataKey[]; suggestions: DataKey[] };
   /** Data used here that first appeared inside the range. */
   note: string | null;
 }
@@ -36,6 +40,7 @@ async function load(ctx: DashboardContext) {
   const [tracking, requests] = await Promise.all([loadTracking(ctx, kr), loadRequests(ctx, kr)]);
   const { status } = tracking;
   const ANSWERS: DataKey[] = ["sent", "answered"];
+  const ASSIGNMENT: DataKey[] = ["sent", "assignedTo", "answered"];
   const SUGGESTIONS: DataKey[] = ["sent", "suggestions"];
   const { rows } = requests;
   return {
@@ -43,9 +48,16 @@ async function load(ctx: DashboardContext) {
       period: kr.period,
       filters: kr.filters,
       answers: isTracked(status, ANSWERS) ? { summary: answerSummary(rows) } : null,
+      assignment: isTracked(status, ASSIGNMENT) ? { groups: requestsByAssignment(rows) } : null,
       suggestions: isTracked(status, SUGGESTIONS) ? { summary: suggestionSummary(rows) } : null,
-      waiting: { answers: missing(status, ANSWERS), suggestions: missing(status, SUGGESTIONS) },
-      note: trackingNote(startedInPeriod(status, kr.period, ["sent", "answered", "suggestions"])),
+      waiting: {
+        answers: missing(status, ANSWERS),
+        assignment: missing(status, ASSIGNMENT),
+        suggestions: missing(status, SUGGESTIONS),
+      },
+      note: trackingNote(
+        startedInPeriod(status, kr.period, ["sent", "answered", "assignedTo", "suggestions"]),
+      ),
     } satisfies AnswersData,
     asOf: oldest(tracking.fetchedAt, requests.fetchedAt),
   };
@@ -54,7 +66,7 @@ async function load(ctx: DashboardContext) {
 const pct = (value: number | null) => (value === null ? "–" : formatNumber(value, "percent"));
 
 function View({ data, ctx }: { data: AnswersData; ctx: DashboardContext }) {
-  const { period, filters, answers, suggestions, waiting } = data;
+  const { period, filters, answers, assignment, suggestions, waiting } = data;
   const a = answers?.summary;
   const s = suggestions?.summary;
   const reviewed = s ? s.accepted + s.declined : 0;
@@ -93,6 +105,14 @@ function View({ data, ctx }: { data: AnswersData; ctx: DashboardContext }) {
             <code>answerer_role</code>: a direct assignee (named), a team member (reached through an assigned
             team), or the requester; someone who is both named and in a team counts as a direct assignee.{" "}
             <strong>Role unknown</strong> is an answer from someone who is none of these.
+          </p>
+          <p>
+            <strong>Answered, by who it was assigned to</strong> is the share of requests with at least one
+            answer, split by how they were assigned (<code>assigned_to</code> on{" "}
+            <code>knowledge_request_created</code>: people, teams or both). Anyone can answer, so a request
+            counts even if the answer came from the requester. A team never answers itself; one of its members
+            does. If team requests are answered less, people may ignore requests not addressed to them by
+            name. It’s a hint, not proof: vaguer questions might go to teams.
           </p>
           <p>
             <strong>AI suggestions</strong> are answers the AI drafted from existing knowledge (
@@ -179,6 +199,33 @@ function View({ data, ctx }: { data: AnswersData; ctx: DashboardContext }) {
       ) : (
         <WaitingCard className="lg:col-span-6" title="How do requests get answered?" keys={waiting.answers}>
           The share answered, time to the first answer, answers per request and who writes them.
+        </WaitingCard>
+      )}
+
+      {assignment ? (
+        <BarList
+          className="lg:col-span-6"
+          title="Answered, by who it was assigned to"
+          subtitle={`Share with at least one answer · ${spanLabel(period)}`}
+          items={assignment.groups.map((g) => ({
+            key: g.assignedTo,
+            label: g.label,
+            share: g.requests > 0 ? g.answered / g.requests : 0,
+            display: `${pct(share(g.answered, g.requests))} of ${formatNumber(g.requests)}`,
+          }))}
+          table={{
+            columns: ["Assigned to", "Requests", "Answered"],
+            rows: assignment.groups.map((g) => [g.label, g.requests, g.answered]),
+          }}
+          empty="No requests."
+        />
+      ) : (
+        <WaitingCard
+          className="lg:col-span-6"
+          title="Answered, by who it was assigned to"
+          keys={waiting.assignment}
+        >
+          The share answered for requests assigned to people, to teams, or to both.
         </WaitingCard>
       )}
 

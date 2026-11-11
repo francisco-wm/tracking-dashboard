@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  answerRateByRouting,
+  requestsByAssignment,
   answerSummary,
   closingSummary,
   formatDuration,
@@ -174,11 +174,11 @@ describe("rejectionSummary", () => {
   });
 });
 
-describe("answerRateByRouting", () => {
-  it("compares people, both and teams, and leaves untracked requests out", () => {
+describe("requestsByAssignment", () => {
+  it("counts requests and answers for people, both and teams, and leaves untracked requests out", () => {
     const users = req(5, { assignedTo: "users" });
     users.answers = [answer(users, 10)];
-    const rates = answerRateByRouting([
+    const rates = requestsByAssignment([
       users,
       req(4, { assignedTo: "users" }),
       req(3, { assignedTo: "teams" }),
