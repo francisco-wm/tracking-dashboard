@@ -1,3 +1,4 @@
+import { InfoTip } from "./info-tip";
 import { formatNumber } from "./scale";
 
 export interface FunnelStep {
@@ -10,18 +11,27 @@ export function Funnel({
   title,
   subtitle,
   steps,
+  info,
+  numbered = true,
 }: {
   title: string;
   subtitle?: string;
   steps: FunnelStep[];
+  /** What the funnel tells you and which decision it helps with, behind an info icon. */
+  info?: string;
+  /** Off for a breakdown rather than steps in order: bars still show each row's share of the first. */
+  numbered?: boolean;
 }) {
   const first = steps[0]?.count ?? 0;
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-border-default bg-background-light p-5">
-      <div>
-        <h3 className="text-title-sm font-medium leading-snug">{title}</h3>
-        {subtitle && <p className="mt-0.5 text-body-sm text-text-secondary">{subtitle}</p>}
-      </div>
+      <header className="flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-title-sm font-medium leading-snug">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-body-sm text-text-secondary">{subtitle}</p>}
+        </div>
+        {info && <InfoTip title={title} text={info} />}
+      </header>
       <ol className="flex flex-col gap-3">
         {steps.map((step, i) => {
           const share = first > 0 ? step.count / first : 0;
@@ -29,7 +39,8 @@ export function Funnel({
             <li key={step.label} className="flex flex-col gap-1">
               <div className="flex items-baseline justify-between gap-3 text-body-sm">
                 <span>
-                  <span className="text-text-secondary">{i + 1}.</span> {step.label}
+                  {numbered && <span className="text-text-secondary">{i + 1}. </span>}
+                  {step.label}
                 </span>
                 <span className="shrink-0 tabular-nums">
                   <span className="font-semibold">{formatNumber(step.count)}</span>

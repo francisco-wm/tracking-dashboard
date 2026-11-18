@@ -1,3 +1,4 @@
+import { InfoTip } from "./info-tip";
 import { formatNumber, type NumberFormat } from "./scale";
 
 /**
@@ -64,10 +65,24 @@ export function Delta({ value, format = "int" }: { value: number; format?: Numbe
   );
 }
 
-export function StatTile({ title, value, caption }: { title: string; value: string; caption?: string }) {
+export function StatTile({
+  title,
+  value,
+  caption,
+  info,
+}: {
+  title: string;
+  value: string;
+  caption?: string;
+  /** What the value tells you and which decision it helps with, behind an info icon. */
+  info?: string;
+}) {
   return (
     <section className="flex flex-col gap-2 rounded-lg border border-border-default bg-background-light p-5">
-      <h3 className="text-title-sm font-medium leading-snug">{title}</h3>
+      <header className="flex items-start justify-between gap-2">
+        <h3 className="text-title-sm font-medium leading-snug">{title}</h3>
+        {info && <InfoTip title={title} text={info} />}
+      </header>
       <p className="text-heading-md font-semibold leading-none">{value}</p>
       {caption && <p className="text-body-sm text-text-secondary">{caption}</p>}
     </section>

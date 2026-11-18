@@ -44,6 +44,31 @@ export const METRIC_SQL = {
   suggestionCreated: `event = 'system_contribution_created'`,
   suggestionApproved: `event = 'system_contribution_approved'`,
   suggestionRejected: `event = 'system_contribution_rejected'`,
+  /**
+   * Something only a signed-in person doing real work does: a chat message, a
+   * new fragment (a written draft or a file uploaded to company knowledge), an
+   * edit, a listing (new or re-listed), a file attached in a chat, a knowledge
+   * request sent or answered (either backend). Logins and page views don't count.
+   */
+  coreAction: `((event = 'chat_message_sent' AND properties.chat_type = 'chat') OR (event = 'kp_status_changed' AND properties.from_status = 'draft' AND properties.to_status = 'published') OR event IN ('knowledge_piece_created', 'knowledge_piece_edit_started', 'knowledge_piece_republished', 'attached_source', 'knowledge_request_created', 'knowledge_request_answered', 'knowledge_request_completed'))`,
+  /** A file or Notion page attached in a chat, for that chat only. */
+  fileAttached: `event = 'attached_source'`,
+  /**
+   * A file (videos too) uploaded to company knowledge, outside a chat: it
+   * becomes a fragment of type "file". Tracked since February 2026.
+   */
+  fileUploaded: `(event = 'knowledge_piece_created' AND ifNull(properties.knowledge_piece_type = 'file', 0))`,
+  /** A fragment cited in a chat answer, once per fragment per answer; `retrieved` ones were fetched but not cited. */
+  cited: `event = 'knowledge_fragment_used_in_response' AND properties.usage = 'cited'`,
+  /** A new account; the person is the new user. */
+  registered: `event = 'user_created'`,
+  inviteSent: `event = 'invitation_created'`,
+  /** The invited person accepted; joined to the invite by `properties.invitation_uuid`. */
+  inviteAccepted: `event = 'invitation_accepted'`,
+  /** Fires on the person who left or was removed, with the organisation. */
+  leftOrg: `event = 'left_organization'`,
+  /** A thumbs up or down on a chat answer: `properties.rating` is 1 or -1. */
+  answerRated: `event = 'chat_response_rated'`,
 } as const;
 
 export type MetricKey = keyof typeof METRIC_SQL;
@@ -59,6 +84,9 @@ export const FRAGMENT_ID = `properties.knowledge_piece_uuid`;
 
 /** The organisation an `appActive` page view belongs to: its slug in the path. */
 export const ORG_SLUG = `extract(properties.$pathname, '^/(?:o|dashboard)/([^/]+)')`;
+
+/** The organisation on every custom event (not on page views). Customers' names are in `properties.organization_name`. */
+export const ORG_ID = `toString(properties.organization_uuid)`;
 
 /** Which home widget a widget event came from. */
 export const WIDGET_ID = `properties.widget_id`;

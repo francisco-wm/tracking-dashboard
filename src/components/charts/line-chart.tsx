@@ -3,7 +3,7 @@
 import { useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { ChartTooltip, type TooltipRow } from "./chart-tooltip";
-import { formatNumber, linearScale, niceTicks, type NumberFormat } from "./scale";
+import { formatNumber, linearScale, markerRows, niceTicks, type NumberFormat } from "./scale";
 import { useMeasuredWidth } from "./use-measured-width";
 
 export interface LineSeries {
@@ -64,6 +64,9 @@ export function LineChart({
   const all = series.flatMap((s) => s.values.filter((v): v is number => v !== null));
   const ticks = niceTicks(0, Math.max(0, ...all), 4, format === "int");
   const x = (i: number) => MARGIN.left + (count > 1 ? (i / (count - 1)) * plotW : plotW / 2);
+  const labelRows = markerRows(
+    markers.map((m) => ({ x: x(m.index), label: m.label, end: m.index > count * 0.8 })),
+  );
   const y = linearScale([ticks.min, ticks.max], [MARGIN.top + plotH, MARGIN.top]);
   const xTicks = fitTicks(xTickIndices, x);
 
@@ -161,7 +164,7 @@ export function LineChart({
           ))}
 
           {/* send markers */}
-          {markers.map((marker) => (
+          {markers.map((marker, i) => (
             <g key={`${marker.index}-${marker.label}`}>
               <line
                 x1={x(marker.index)}
@@ -174,7 +177,7 @@ export function LineChart({
               />
               <text
                 x={x(marker.index)}
-                y={MARGIN.top - 9}
+                y={MARGIN.top - 9 - labelRows[i] * 12}
                 textAnchor={marker.index > count * 0.8 ? "end" : "middle"}
                 className="fill-text-secondary text-[11px]"
               >

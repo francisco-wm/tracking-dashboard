@@ -47,3 +47,22 @@ export function formatNumber(value: number, format: NumberFormat = "int"): strin
   if (format === "percent") return percentFormat.format(value);
   return intFormat.format(value);
 }
+
+/**
+ * Which line each marker label sits on, so close markers' labels don't
+ * overlap: 0 is the usual line, 1 the one above it. Widths are estimated at
+ * 6px a character (11px text).
+ * ponytail: two lines only; a third close marker shares line 1.
+ */
+export function markerRows(labels: readonly { x: number; label: string; end: boolean }[]): number[] {
+  const rows = labels.map(() => 0);
+  let lastRight = -Infinity; // right edge of the latest label on line 0
+  for (const i of labels.map((_, i) => i).sort((a, b) => labels[a].x - labels[b].x)) {
+    const { x, label, end } = labels[i];
+    const width = label.length * 6;
+    const left = end ? x - width : x - width / 2;
+    if (left < lastRight + 8) rows[i] = 1;
+    else lastRight = left + width;
+  }
+  return rows;
+}

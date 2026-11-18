@@ -2,6 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 
+import { InfoTip } from "./info-tip";
+
 export interface ChartTable {
   columns: string[];
   rows: (string | number)[][];
@@ -17,6 +19,7 @@ export function ChartCard({
   legend,
   table,
   className,
+  info,
   children,
 }: {
   title: string;
@@ -24,6 +27,8 @@ export function ChartCard({
   legend?: ReactNode;
   table?: ChartTable;
   className?: string;
+  /** What the chart tells you and which decision it helps with, behind an info icon. */
+  info?: string;
   children: ReactNode;
 }) {
   const [showTable, setShowTable] = useState(false);
@@ -46,6 +51,7 @@ export function ChartCard({
             {showTable ? "Chart" : "Table"}
           </button>
         )}
+        {info && <InfoTip title={title} text={info} />}
       </header>
       {legend && !showTable && legend}
       {showTable && table ? <DataTable table={table} /> : children}

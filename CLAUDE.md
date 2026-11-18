@@ -29,7 +29,8 @@ The one exception is opt-in: Fragment editing, Home widgets, Knowledge requests 
 internal users" switch (on by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's
 `config.ts`: cohort 61287 "Wingmaite internal users" in production (PostHog's own test-account filter), a
 `@wingmaite.com` email in staging (no cohort there). Keep the definitions identical. Don't add exclusions
-anywhere else unless asked.
+anywhere else unless asked. Adoption v2 is the one dashboard where the switch is off by default (internal users
+left out; `?internal=include` counts them), at the product team's request.
 
 ## Other hard rules
 
@@ -49,37 +50,43 @@ anywhere else unless asked.
 The canonical SQL is `METRIC_SQL` in `src/lib/posthog/metrics.ts`, shared by every dashboard. Add new metrics
 there instead of writing a variant inside a dashboard.
 
-| Metric                  | Definition                                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------------------- |
-| Chat messages sent      | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                   |
-| People chatting         | Unique persons with a chat message                                                                  |
-| Contributions           | `knowledge_shared` (count; one per message in a knowledge-creation chat). Creation, not consumption |
-| People contributing     | Unique persons with a contribution                                                                  |
-| New knowledge listed    | `kp_status_changed` where `from_status = 'draft'` and `to_status = 'published'`                     |
-| Re-listed               | `knowledge_piece_republished`                                                                       |
-| First-time creators     | Persons whose first-ever new listing (all history) falls in the window                              |
-| Email clicks            | `reach_email_cta_clicked` where `properties.source = 'reach_email'`                                 |
-| Clickers                | Unique persons with an email click                                                                  |
-| Active people           | Unique persons with a `$pageview`                                                                   |
-| Active in the app       | `$pageview` on `/o/<slug>/…` (`/dashboard/<slug>/…` before July 2026), not `/o/<slug>/setup`        |
-| Active organisations    | Distinct `<slug>` in the path of in-app page views (`ORG_SLUG`)                                     |
-| Edits started           | `knowledge_piece_edit_started`; fragments are keyed by `properties.knowledge_piece_uuid`            |
-| Edited fragments listed | Unique fragments with a re-list                                                                     |
-| Home-page views         | `$pageview` where `$pathname` is `/o/<slug>`, the organisation home page and the widgets' only home |
-| Widget clicks           | `dashboard_widget_clicked`, by `properties.widget_id` and `properties.action`                       |
-| Failed widget loads     | `dashboard_widget_fetch_failed`, by `properties.widget_id`                                          |
-| Widget retries          | `dashboard_widget_retry_clicked`, by `properties.widget_id`                                         |
-| Drafts created          | `knowledge_piece_created`; carries the draft's `knowledge_piece_uuid` and `chat_uuid`               |
-| Draft messages          | `chat_message_sent` where `chat_type = 'knowledge_creation'`; includes a chat's first message       |
-| Requests answered       | `knowledge_request_answered`, on the publisher; old backend sent `knowledge_request_completed`      |
-| Gaps detected           | `knowledge_gap_detected`: the AI drafted a request in a chat; nobody is assigned yet                |
-| Requests sent           | `knowledge_request_created`: the first assignment, not the AI draft; `knowledge_request_uuid`       |
-| Requests opened         | `knowledge_request_opened`, once per request, by the first person assigned who opens it             |
-| Not opened in 7 days    | `knowledge_request_ignored`: still unopened 7 days after sending; not for closed or deleted         |
-| Rejections              | `knowledge_request_rejected`, by `properties.reason` (optional) and `properties.reassigned`         |
-| Answers                 | `knowledge_request_answered`: a published reply linked to the request; several per request          |
-| Requests closed         | `knowledge_request_closed`, by `properties.outcome` (`resolved` or `cancelled`)                     |
-| AI suggestions          | `system_contribution_created`/`_approved`/`_rejected`; request id is `knowledge_request_id`         |
+| Metric                  | Definition                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Chat messages sent      | `chat_message_sent` where `properties.chat_type = 'chat'` (count)                                                |
+| People chatting         | Unique persons with a chat message                                                                               |
+| Contributions           | `knowledge_shared` (count; one per message in a knowledge-creation chat). Creation, not consumption              |
+| People contributing     | Unique persons with a contribution                                                                               |
+| New knowledge listed    | `kp_status_changed` where `from_status = 'draft'` and `to_status = 'published'`                                  |
+| Re-listed               | `knowledge_piece_republished`                                                                                    |
+| First-time creators     | Persons whose first-ever new listing (all history) falls in the window                                           |
+| Email clicks            | `reach_email_cta_clicked` where `properties.source = 'reach_email'`                                              |
+| Clickers                | Unique persons with an email click                                                                               |
+| Active people           | Unique persons with a `$pageview`                                                                                |
+| Active in the app       | `$pageview` on `/o/<slug>/…` (`/dashboard/<slug>/…` before July 2026), not `/o/<slug>/setup`                     |
+| Active organisations    | Distinct `<slug>` in the path of in-app page views (`ORG_SLUG`)                                                  |
+| Edits started           | `knowledge_piece_edit_started`; fragments are keyed by `properties.knowledge_piece_uuid`                         |
+| Edited fragments listed | Unique fragments with a re-list                                                                                  |
+| Home-page views         | `$pageview` where `$pathname` is `/o/<slug>`, the organisation home page and the widgets' only home              |
+| Widget clicks           | `dashboard_widget_clicked`, by `properties.widget_id` and `properties.action`                                    |
+| Failed widget loads     | `dashboard_widget_fetch_failed`, by `properties.widget_id`                                                       |
+| Widget retries          | `dashboard_widget_retry_clicked`, by `properties.widget_id`                                                      |
+| Drafts created          | `knowledge_piece_created`; carries the draft's `knowledge_piece_uuid` and `chat_uuid`                            |
+| Draft messages          | `chat_message_sent` where `chat_type = 'knowledge_creation'`; includes a chat's first message                    |
+| Requests answered       | `knowledge_request_answered`, on the publisher; old backend sent `knowledge_request_completed`                   |
+| Gaps detected           | `knowledge_gap_detected`: the AI drafted a request in a chat; nobody is assigned yet                             |
+| Requests sent           | `knowledge_request_created`: the first assignment, not the AI draft; `knowledge_request_uuid`                    |
+| Requests opened         | `knowledge_request_opened`, once per request, by the first person assigned who opens it                          |
+| Not opened in 7 days    | `knowledge_request_ignored`: still unopened 7 days after sending; not for closed or deleted                      |
+| Rejections              | `knowledge_request_rejected`, by `properties.reason` (optional) and `properties.reassigned`                      |
+| Answers                 | `knowledge_request_answered`: a published reply linked to the request; several per request                       |
+| Requests closed         | `knowledge_request_closed`, by `properties.outcome` (`resolved` or `cancelled`)                                  |
+| AI suggestions          | `system_contribution_created`/`_approved`/`_rejected`; request id is `knowledge_request_id`                      |
+| Core action             | Chat message, new fragment (draft or upload), edit, listing or re-list, `attached_source`, request sent/answered |
+| Files uploaded          | `knowledge_piece_created` with `knowledge_piece_type = 'file'`: company knowledge, no chat; videos too           |
+| Files attached          | `attached_source`: a file or Notion page attached in a chat, for that chat only                                  |
+| Sourced answer          | Regular-chat message with a `knowledge_fragment_used_in_response` (`usage = 'cited'`) before next                |
+| Registrations           | `user_created` (the person is the new user); invited when they also have `invitation_accepted`                   |
+| Seats (approximate)     | People seen on an organisation's custom events, minus `left_organization`; no seat count exists                  |
 
 Weekly lifecycle, on `$pageview`, Monday weeks:
 
@@ -219,6 +226,27 @@ recipients.
   exceed 100%.
 - Organisation slugs are customer names: hidden behind "Show names" (`?names=1`), "Organisation 1", ... by
   default.
+
+## Adoption v2
+
+- Spec and source mapping: the "Adoption Dashboard v2 — Spec" Claude Doc
+  (https://claude.ai/artifact/Rb6K3Rr2gB1TGnKnaY379Z). Sections: Headline, Account health, Activation,
+  Retention, Knowledge loop.
+- Active means a core action (`METRIC_SQL.coreAction`), not a page view. The organisation is
+  `properties.organization_uuid`, on every custom event (page views don't carry it); names are customers', shown
+  only with "Show names".
+- Citations link to a message by chat: `conversation_id` on the citation equals `chat_uuid` on the message.
+  They started at `CITATIONS_STARTED[env]` (production 28 Oct 2026 18:00, staging 19 Oct 12:46): weeks before
+  are `null`, and the funnel waits until people registered after it have had 28 days (25 Nov 2026).
+- Paying status and file-ingestion failures are out of v2: no source exists.
+- Knowledge going in (Supply, and Account health's "New fragments") is only what answers can cite: listings, re-listed edits and files uploaded to
+  company knowledge. Drafts and edits don't count until listed. Cited files are about half of all citations.
+- Weekly charts mark `ANNOTATIONS` (`config.ts`) and every Knowledge Champions send (that dashboard's
+  `SEND_DATES`, planned ones included), each from its day on. Close markers' labels stack (`markerRows`).
+- v2 imports v1's filters, chart helpers, notes and `FilterControls` from `../adoption`; move them into v2 when
+  v1 is retired.
+- HogQL: an output alias equal to a column used elsewhere in the same SELECT resolves to the alias (nested
+  aggregate or type errors). Give outputs their own names.
 
 ## Building a dashboard
 

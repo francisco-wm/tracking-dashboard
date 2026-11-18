@@ -6,7 +6,7 @@ import { roundedBottomBar, roundedTopBar } from "./bar-chart";
 import { ChartTooltip } from "./chart-tooltip";
 import { DROPPED_OFF, LIFECYCLE_SEGMENTS } from "./lifecycle-segments";
 import type { ChartMarker } from "./line-chart";
-import { formatNumber, linearScale, niceTicks } from "./scale";
+import { formatNumber, linearScale, markerRows, niceTicks } from "./scale";
 import { useMeasuredWidth } from "./use-measured-width";
 
 export interface LifecycleBar {
@@ -54,6 +54,9 @@ export function LifecycleChart({
   const barW = Math.min(MAX_BAR, Math.max(2, band - 3));
   const center = (i: number) => MARGIN.left + band * i + band / 2;
   const zero = y(0);
+  const labelRows = markerRows(
+    markers.map((m) => ({ x: center(m.index), label: m.label, end: m.index > bars.length * 0.8 })),
+  );
 
   return (
     <div ref={ref} className="relative w-full" style={{ height }} role="group" aria-label={ariaLabel}>
@@ -90,7 +93,7 @@ export function LifecycleChart({
               {bars[i].label}
             </text>
           ))}
-          {markers.map((marker) => (
+          {markers.map((marker, i) => (
             <g key={`${marker.index}-${marker.label}`}>
               <line
                 x1={center(marker.index)}
@@ -102,7 +105,7 @@ export function LifecycleChart({
               />
               <text
                 x={center(marker.index)}
-                y={MARGIN.top - 9}
+                y={MARGIN.top - 9 - labelRows[i] * 12}
                 textAnchor={marker.index > bars.length * 0.8 ? "end" : "middle"}
                 className="fill-text-secondary text-[11px]"
               >

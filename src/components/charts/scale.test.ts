@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatNumber, linearScale, niceTicks } from "./scale";
+import { formatNumber, linearScale, markerRows, niceTicks } from "./scale";
 
 describe("niceTicks", () => {
   it("covers the data with clean steps from zero", () => {
@@ -40,5 +40,26 @@ describe("formatNumber", () => {
     expect(formatNumber(1284)).toBe("1,284");
     expect(formatNumber(2.345, "decimal")).toBe("2.3");
     expect(formatNumber(0.1333, "percent")).toBe("13.3%");
+  });
+});
+
+describe("markerRows", () => {
+  it("lifts a label that would overlap the one before it", () => {
+    // 15 characters ≈ 90px wide, centred: 455–545; the next ends at 613, starting at 517
+    expect(
+      markerRows([
+        { x: 613, label: "Requests released", end: true },
+        { x: 500, label: "Champions email", end: false },
+      ]),
+    ).toEqual([1, 0]);
+  });
+
+  it("keeps labels apart on the usual line", () => {
+    expect(
+      markerRows([
+        { x: 100, label: "Send", end: false },
+        { x: 300, label: "Send", end: false },
+      ]),
+    ).toEqual([0, 0]);
   });
 });
