@@ -60,6 +60,8 @@ today drives the page; windows, markers and copy follow automatically.
 
 ## Moving to Vercel
 
-- Set `NPM_TOKEN` (GitHub PAT with `read:packages`) and add `//npm.pkg.github.com/:_authToken=${NPM_TOKEN}` to `.npmrc`.
+- Set `NPM_TOKEN` (classic GitHub PAT with `read:packages`, SSO-authorized) for Production and Preview, and set the
+  project's Install Command to `echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> .npmrc && pnpm install`.
+  The token stays out of git; the repo's `.npmrc` only names the `@wingmaite` registry.
 - Add the production redirect URI to the Google OAuth client.
 - Switch `'use cache'` to `'use cache: remote'` in `src/lib/posthog/cached-query.ts` so instances share the cache.
