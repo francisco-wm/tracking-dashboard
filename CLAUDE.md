@@ -29,7 +29,7 @@ The one exception is opt-in: Fragment editing, Home widgets, Knowledge requests 
 internal users" switch (on by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's
 `config.ts`: cohort 61287 "Wingmaite internal users" in production (PostHog's own test-account filter), a
 `@wingmaite.com` email in staging (no cohort there). Keep the definitions identical. Don't add exclusions
-anywhere else unless asked. Adoption v2 is the one dashboard where the switch is off by default (internal users
+anywhere else unless asked. The Adoption dashboard (`adoption-dashboard`, code in `src/dashboards/adoption-v2/`) is the one dashboard where the switch is off by default (internal users
 left out; `?internal=include` counts them), at the product team's request.
 
 ## Other hard rules
@@ -227,8 +227,10 @@ recipients.
 - Organisation slugs are customer names: hidden behind "Show names" (`?names=1`), "Organisation 1", ... by
   default.
 
-## Adoption v2
+## Adoption dashboard (v2)
 
+- Served at `/dashboards/adoption-dashboard`; the code stays in `src/dashboards/adoption-v2/`. The first
+  Adoption dashboard (`src/dashboards/adoption/`) is hidden: not in `registry.ts`, so its URL 404s.
 - Spec and source mapping: the "Adoption Dashboard v2 — Spec" Claude Doc
   (https://claude.ai/artifact/Rb6K3Rr2gB1TGnKnaY379Z). Sections: Headline, Account health, Activation,
   Retention, Knowledge loop.

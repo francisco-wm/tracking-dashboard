@@ -12,7 +12,7 @@ import { retentionSection } from "./sections/retention";
 
 export const adoptionV2: DashboardModule = {
   slug: DASHBOARD_SLUG,
-  title: "Adoption v2",
+  title: "Adoption dashboard",
   description:
     "Is wingmaite being adopted, and where does value happen? Active people and organisations, account health, activation, retention and the knowledge loop.",
   headerNote(ctx) {

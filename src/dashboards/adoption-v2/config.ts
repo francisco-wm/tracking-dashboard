@@ -3,7 +3,7 @@ import type { EnvKey } from "@/lib/posthog/environments";
 
 import { SEND_DATES } from "../knowledge-champions/config";
 
-export const DASHBOARD_SLUG = "adoption-v2";
+export const DASHBOARD_SLUG = "adoption-dashboard";
 
 /**
  * Citations (knowledge_fragment_used_in_response) started at these moments,
