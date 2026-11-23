@@ -19,18 +19,18 @@ vars and the Vercel checklist are in `README.md`.
   builds (`src/lib/auth/mode.ts`).
 - Tests: Vitest (`pnpm test`). Also `pnpm typecheck`, `pnpm lint`, `pnpm format`.
 
-## The key rule: everyone is counted
+## The key rule: internal users are one switch
 
-Never exclude internal or test users. No `filterTestAccounts`, no `$internal`/email filters, no person
-cohorts that drop staff. Numbers will be equal to or higher than PostHog dashboards that filter them out,
-and that is intended. Each dashboard's "How this is measured" note says so (`EveryoneCounted`).
+Every dashboard has an "Include internal users" switch, **off by default**: internal users are left out
+unless the viewer turns it on (`?internal=include`, which counts everyone). Off adds `INTERNAL_PEOPLE[env]`
+from the module's `config.ts`: cohort 61287 "Wingmaite internal users" in production (PostHog's own
+test-account filter), a `@wingmaite.com` email in staging (no cohort there). Keep the definitions identical
+(each module's tests compare them). Each dashboard's "How this is measured" note says which applies
+(`WhoIsCounted`).
 
-The one exception is opt-in: Fragment editing, Home widgets, Knowledge requests and Adoption have an "Include
-internal users" switch (on by default). Off (`?internal=exclude`) adds `INTERNAL_PEOPLE[env]` from the module's
-`config.ts`: cohort 61287 "Wingmaite internal users" in production (PostHog's own test-account filter), a
-`@wingmaite.com` email in staging (no cohort there). Keep the definitions identical. Don't add exclusions
-anywhere else unless asked. The Adoption dashboard (`adoption-dashboard`, code in `src/dashboards/adoption-v2/`) is the one dashboard where the switch is off by default (internal users
-left out; `?internal=include` counts them), at the product team's request.
+That switch is the only exclusion. No `filterTestAccounts`, no `$internal`/other email filters, no other
+person cohorts. With the switch on, numbers will be equal to or higher than PostHog dashboards that filter test
+accounts out, and that is intended.
 
 ## Other hard rules
 
@@ -118,6 +118,8 @@ recipients.
 - Weekly charts: last 26 Monday weeks, a dashed marker on each send, the current week drawn lighter.
 - If a metric was first tracked after the before window started, show `trackingCaveat` instead of a silent
   unfair comparison.
+- The internal-users switch filters every query, clicker list and lifecycle included, except `TRACKING_START`:
+  it asks when an event first existed, not who sent it.
 
 ## Fragment editing
 
@@ -243,8 +245,8 @@ recipients.
 - Paying status and file-ingestion failures are out of v2: no source exists.
 - Knowledge going in (Supply, and Account health's "New fragments") is only what answers can cite: listings, re-listed edits and files uploaded to
   company knowledge. Drafts and edits don't count until listed. Cited files are about half of all citations.
-- Weekly charts mark `ANNOTATIONS` (`config.ts`) and every Knowledge Champions send (that dashboard's
-  `SEND_DATES`, planned ones included), each from its day on. Close markers' labels stack (`markerRows`).
+- Weekly charts mark `ANNOTATIONS` (`config.ts`), each from its day on. Knowledge Champions sends are
+  deliberately not marked. Close markers' labels stack (`markerRows`).
 - v2 imports v1's filters, chart helpers, notes and `FilterControls` from `../adoption`; move them into v2 when
   v1 is retired.
 - HogQL: an output alias equal to a column used elsewhere in the same SELECT resolves to the alias (nested

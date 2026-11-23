@@ -2,6 +2,8 @@ import type { DashboardModule } from "@/dashboards/types";
 import { formatDayMonth, formatDayRange } from "@/lib/dates";
 
 import { DASHBOARD_SLUG, SEND_DATES } from "./config";
+import { controls } from "./controls";
+import { parseFilters } from "./filters";
 import { clickers } from "./sections/clickers";
 import { comingBack } from "./sections/coming-back";
 import { contributingSection } from "./sections/contributing";
@@ -18,7 +20,11 @@ export const knowledgeChampions: DashboardModule = {
     const send = latestSend(SEND_DATES, ctx.today);
     if (!send) return null;
     const w = deriveWindows(send, ctx.today);
-    return `Latest send ${formatDayMonth(send)} ${send.slice(0, 4)} · comparing ${formatDayRange(w.after.start, w.after.end)} with ${formatDayRange(w.before.start, w.before.end)}`;
+    const who = parseFilters(ctx.searchParams).excludeInternal
+      ? "internal users excluded"
+      : "everyone counted, including internal users";
+    return `Latest send ${formatDayMonth(send)} ${send.slice(0, 4)} · comparing ${formatDayRange(w.after.start, w.after.end)} with ${formatDayRange(w.before.start, w.before.end)} · ${who}`;
   },
+  controls,
   sections: [reach, questions, contributingSection, comingBack, clickers],
 };

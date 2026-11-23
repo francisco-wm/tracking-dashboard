@@ -1,7 +1,7 @@
 // HogQL for the Fragment editing dashboard. Each query was checked against
 // production (60292) and staging (55666) before being wired in. Values are
 // passed as {placeholders}; datetimes are "YYYY-MM-DD 00:00:00" in UTC.
-// Internal users are only dropped when the viewer asks: `people` is then an
+// Internal users are dropped unless the viewer includes them: `people` is then an
 // AND clause built from INTERNAL_PEOPLE, otherwise "" and everyone is counted.
 
 import { FRAGMENT_ID, METRIC_SQL } from "@/lib/posthog/metrics";

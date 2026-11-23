@@ -55,7 +55,8 @@ export function WhoIsCounted({ filters, env, who }: { filters: Filters; env: Env
     return (
       <p>
         <strong>Internal users are left out:</strong> {INTERNAL_PEOPLE[env].description}. The filter applies
-        to {who}; what happens to a request afterwards belongs to it, whoever acts. Days are in UTC.
+        to {who}; what happens to a request afterwards belongs to it, whoever acts. Turn on “Include internal
+        users” to count everyone. Days are in UTC.
       </p>
     );
   }

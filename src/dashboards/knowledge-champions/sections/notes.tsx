@@ -1,4 +1,8 @@
+import type { DashboardContext } from "@/dashboards/types";
 import { formatDayMonth, type ISODate } from "@/lib/dates";
+
+import { INTERNAL_PEOPLE } from "../config";
+import { parseFilters } from "../filters";
 
 /** Shared lines for the "How this is measured" notes. */
 
@@ -11,11 +15,21 @@ export function WeeklyNote() {
   );
 }
 
-export function EveryoneCounted() {
+export function WhoIsCounted({ ctx }: { ctx: DashboardContext }) {
+  if (parseFilters(ctx.searchParams).excludeInternal) {
+    return (
+      <p>
+        <strong>Internal users are left out:</strong> {INTERNAL_PEOPLE[ctx.env].description}. Their events
+        don’t count anywhere on this page. Turn on “Include internal users” to count them. Days and weeks are
+        in UTC.
+      </p>
+    );
+  }
   return (
     <p>
       Everyone is counted, including internal and test accounts, so numbers can be higher than PostHog
-      dashboards that filter those out. Days and weeks are in UTC.
+      dashboards that filter those out. Turn off “Include internal users” to leave them out. Days and weeks
+      are in UTC.
     </p>
   );
 }

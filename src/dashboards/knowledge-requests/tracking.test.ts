@@ -29,12 +29,15 @@ const STATUS: TrackingStatus = {
 };
 
 describe("filters", () => {
-  it("defaults to 90 days with everyone counted, and keeps defaults out of the URL", () => {
-    expect(parseFilters({})).toEqual({ days: 90, excludeInternal: false });
+  it("defaults to 90 days with internal users left out, and keeps defaults out of the URL", () => {
+    expect(parseFilters({})).toEqual({ days: 90, excludeInternal: true });
     expect(parseFilters({ range: "45" }).days).toBe(90);
     expect(parseFilters({ range: "30", internal: "exclude" })).toEqual({ days: 30, excludeInternal: true });
-    expect(filterParams({ days: 90, excludeInternal: false })).toEqual({ range: null, internal: null });
-    expect(filterParams({ days: 180, excludeInternal: true })).toEqual({ range: "180", internal: "exclude" });
+    expect(filterParams({ days: 90, excludeInternal: true })).toEqual({ range: null, internal: null });
+    expect(filterParams({ days: 180, excludeInternal: false })).toEqual({
+      range: "180",
+      internal: "include",
+    });
   });
 
   it("counts today and the days before it", () => {

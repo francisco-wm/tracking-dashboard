@@ -34,8 +34,8 @@ production build without the auth variables fails closed.
 - `src/lib/posthog/`: the server-only query client. `environments.ts` is the allowlist (Production 60292,
   Staging 55666); the browser only ever sends `?env=staging`. `cached-query.ts` caches each project + query
   for ~10 minutes (`'use cache'`); the Refresh button expires that dashboard's tag. `metrics.ts` holds the
-  canonical HogQL for every metric. No test-account filters are applied: everyone is counted, unless a viewer
-  turns off "Include internal users" on Fragment editing or Home widgets.
+  canonical HogQL for every metric. Internal users are left out by default; every dashboard has an "Include internal users"
+  switch that counts everyone.
 - `src/components/shell/`: the generic layout (title, environment switch, section tabs, ←/→ navigation,
   "data as of" + Refresh, "How this is measured").
 - `src/components/charts/`: hand-built SVG charts (line with end labels and send markers, bars, lifecycle

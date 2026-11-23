@@ -6,13 +6,15 @@ import type { HogQLValue } from "@/lib/posthog/client";
 import { cachedHogQL, type QueryRecord } from "@/lib/posthog/cached-query";
 import type { MetricKey } from "@/lib/posthog/metrics";
 
-import { SEND_DATES } from "./config";
+import { INTERNAL_PEOPLE, SEND_DATES } from "./config";
+import { parseFilters, type Filters } from "./filters";
 import {
   CLICKERS,
   FIRST_TIME_CREATORS,
   HISTORY_START,
   LIFECYCLE,
   LISTINGS_DAILY,
+  peopleFilter,
   TRACKING_START,
   WEEKLY,
   WINDOW_DAILY,
@@ -33,6 +35,9 @@ export interface KCContext {
   weekly: WeeklyRange;
   /** Send dates to mark on weekly charts. */
   markers: ISODate[];
+  filters: Filters;
+  /** HogQL clause dropping internal users, or "" when everyone is counted. */
+  people: string;
 }
 
 /** Null before the first send: there is nothing to compare yet. */
@@ -40,11 +45,14 @@ export function kcContext(ctx: DashboardContext): KCContext | null {
   const send = latestSend(SEND_DATES, ctx.today);
   if (!send) return null;
   const weekly = weeklyRange(ctx.today);
+  const filters = parseFilters(ctx.searchParams);
   return {
     today: ctx.today,
     windows: deriveWindows(send, ctx.today),
     weekly,
     markers: sendMarkers(SEND_DATES, weekly, ctx.today),
+    filters,
+    people: peopleFilter(filters.excludeInternal ? INTERNAL_PEOPLE[ctx.env].sql : null),
   };
 }
 
@@ -72,7 +80,7 @@ function byDate(records: QueryRecord[], column: string): Map<ISODate, number> {
 export type DailyMetric = "questions" | "contributions" | "new_listings" | "relists" | "clicks" | "clickers";
 
 export async function loadWindowDaily(ctx: DashboardContext, kc: KCContext) {
-  const { records, fetchedAt } = await run(ctx, "window-daily", WINDOW_DAILY, {
+  const { records, fetchedAt } = await run(ctx, "window-daily", WINDOW_DAILY(kc.people), {
     start: dt(kc.windows.before.start),
     end: dt(queryEnd(kc)),
   });
@@ -103,7 +111,7 @@ export interface UniqueCompare {
 
 export async function loadWindowUniques(ctx: DashboardContext, kc: KCContext) {
   const { windows } = kc;
-  const { records, fetchedAt } = await run(ctx, "window-uniques", WINDOW_UNIQUES, {
+  const { records, fetchedAt } = await run(ctx, "window-uniques", WINDOW_UNIQUES(kc.people), {
     start: dt(windows.before.start),
     matched_end: dt(addDays(windows.before.start, windows.daysElapsed)),
     send: dt(windows.send),
@@ -127,7 +135,7 @@ export async function loadWindowUniques(ctx: DashboardContext, kc: KCContext) {
 // --- First-time creators -----------------------------------------------------
 
 export async function loadFirstTimeCreators(ctx: DashboardContext, kc: KCContext) {
-  const { records, fetchedAt } = await run(ctx, "first-time-creators", FIRST_TIME_CREATORS, {
+  const { records, fetchedAt } = await run(ctx, "first-time-creators", FIRST_TIME_CREATORS(kc.people), {
     history_start: HISTORY_START,
     start: dt(kc.windows.before.start),
     end: dt(queryEnd(kc)),
@@ -147,7 +155,7 @@ export type WeeklyMetric =
   | "active_people";
 
 export async function loadWeekly(ctx: DashboardContext, kc: KCContext) {
-  const { records, fetchedAt } = await run(ctx, "weekly", WEEKLY, {
+  const { records, fetchedAt } = await run(ctx, "weekly", WEEKLY(kc.people), {
     start: dt(kc.weekly.start),
     end: dt(addDays(kc.today, 1)),
   });
@@ -180,7 +188,7 @@ export interface LifecycleWeek {
 
 export async function loadLifecycle(ctx: DashboardContext, kc: KCContext) {
   const { weeks } = kc.weekly;
-  const { records, fetchedAt } = await run(ctx, "lifecycle", LIFECYCLE, {
+  const { records, fetchedAt } = await run(ctx, "lifecycle", LIFECYCLE(kc.people), {
     history_start: HISTORY_START,
     prev_start: dt(addDays(weeks[0], -7)),
     end: dt(addDays(kc.today, 1)),
@@ -207,7 +215,7 @@ export const LISTING_LOOKBACK_DAYS = 60;
 
 export async function loadListingsLast60(ctx: DashboardContext, kc: KCContext) {
   const start = addDays(kc.today, -(LISTING_LOOKBACK_DAYS - 1));
-  const { records, fetchedAt } = await run(ctx, "listings-60d", LISTINGS_DAILY, {
+  const { records, fetchedAt } = await run(ctx, "listings-60d", LISTINGS_DAILY(kc.people), {
     start: dt(start),
     end: dt(addDays(kc.today, 1)),
   });
@@ -266,7 +274,7 @@ export interface ClickerRow {
 }
 
 export async function loadClickers(ctx: DashboardContext, kc: KCContext) {
-  const { records, fetchedAt } = await run(ctx, "clickers", CLICKERS, {
+  const { records, fetchedAt } = await run(ctx, "clickers", CLICKERS(kc.people), {
     events_start: dt(addDays(kc.windows.send, -7)),
     send: dt(kc.windows.send),
     end: dt(addDays(kc.today, 1)),

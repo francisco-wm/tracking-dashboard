@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { dayIndex, derivePeriod, filterParams, parseFilters, share, trackedSince } from "./filters";
 
 describe("parseFilters", () => {
-  it("defaults to 90 days with everyone counted", () => {
-    expect(parseFilters({})).toEqual({ days: 90, excludeInternal: false });
+  it("defaults to 90 days with internal users left out", () => {
+    expect(parseFilters({})).toEqual({ days: 90, excludeInternal: true });
   });
 
   it("accepts the offered ranges only", () => {
@@ -15,21 +15,21 @@ describe("parseFilters", () => {
     expect(parseFilters({ range: ["30", "180"] }).days).toBe(30);
   });
 
-  it("excludes internal users only when asked", () => {
-    expect(parseFilters({ internal: "exclude" }).excludeInternal).toBe(true);
+  it("includes internal users only when asked", () => {
     expect(parseFilters({ internal: "include" }).excludeInternal).toBe(false);
-    expect(parseFilters({ internal: "1" }).excludeInternal).toBe(false);
+    expect(parseFilters({ internal: "exclude" }).excludeInternal).toBe(true);
+    expect(parseFilters({ internal: "1" }).excludeInternal).toBe(true);
   });
 });
 
 describe("filterParams", () => {
   it("leaves defaults out of the URL", () => {
-    expect(filterParams({ days: 90, excludeInternal: false })).toEqual({ range: null, internal: null });
-    expect(filterParams({ days: 30, excludeInternal: true })).toEqual({ range: "30", internal: "exclude" });
+    expect(filterParams({ days: 90, excludeInternal: true })).toEqual({ range: null, internal: null });
+    expect(filterParams({ days: 30, excludeInternal: false })).toEqual({ range: "30", internal: "include" });
   });
 
   it("round-trips through parseFilters", () => {
-    const filters = { days: 180, excludeInternal: true } as const;
+    const filters = { days: 180, excludeInternal: false } as const;
     const params = Object.fromEntries(
       Object.entries(filterParams(filters)).filter((e): e is [string, string] => e[1] !== null),
     );

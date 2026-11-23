@@ -24,7 +24,7 @@ import {
 } from "../data";
 import { questionsSentence } from "../sentences";
 import { WINDOW_DAYS, type DayPair } from "../windows";
-import { EveryoneCounted, WeeklyNote } from "./notes";
+import { WhoIsCounted, WeeklyNote } from "./notes";
 
 interface QuestionsData {
   kc: KCContext;
@@ -54,7 +54,7 @@ async function load(ctx: DashboardContext) {
   };
 }
 
-function View({ data }: { data: QuestionsData | null }) {
+function View({ data, ctx }: { data: QuestionsData | null; ctx: DashboardContext }) {
   if (!data) return <NoSendYet />;
   const { kc, pairs, asking } = data;
   const { daysElapsed } = kc.windows;
@@ -84,7 +84,7 @@ function View({ data }: { data: QuestionsData | null }) {
             numbers stay comparable while the after window fills up.
           </p>
           <WeeklyNote />
-          <EveryoneCounted />
+          <WhoIsCounted ctx={ctx} />
         </>
       }
     >

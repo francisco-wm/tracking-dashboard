@@ -17,7 +17,7 @@ import { hrefWith } from "@/lib/url";
 
 import { kcContext, loadClickers, type BeforeAfter, type ClickerRow, type KCContext } from "../data";
 import { clickersSentence } from "../sentences";
-import { EveryoneCounted } from "./notes";
+import { WhoIsCounted } from "./notes";
 
 const DAY_MS = 86_400_000;
 
@@ -112,7 +112,7 @@ function View({ data, ctx }: { data: ClickersData | null; ctx: DashboardContext 
             The table compares each clicker’s 7 days before their first click with the 7 days after. Rows
             marked “so far” clicked less than 7 days ago, so their after numbers are still growing.
           </p>
-          <EveryoneCounted />
+          <WhoIsCounted ctx={ctx} />
         </>
       }
     >

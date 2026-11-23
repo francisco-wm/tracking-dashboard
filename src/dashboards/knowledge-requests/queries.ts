@@ -2,8 +2,8 @@
 // production (60292) and staging (55666) before being wired in. Values are
 // passed as {placeholders}; datetimes are "YYYY-MM-DD 00:00:00" in UTC.
 // Everything is joined per request on its id, never per person: the requester,
-// assignees and answerers are different people. Internal users are only dropped
-// when the viewer asks, and only on the event that puts a request or gap in the
+// assignees and answerers are different people. Internal users are dropped
+// unless the viewer includes them, and only on the event that puts a request or gap in the
 // count (`people`, an AND clause built from INTERNAL_PEOPLE, otherwise ""):
 // what happens to it afterwards belongs to that request.
 //

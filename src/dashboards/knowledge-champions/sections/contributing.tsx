@@ -29,7 +29,7 @@ import {
 } from "../data";
 import { contributingSentence } from "../sentences";
 import { longestZeroRun, WINDOW_DAYS, type DayPair, type ZeroRun } from "../windows";
-import { EveryoneCounted, trackingCaveat, WeeklyNote } from "./notes";
+import { WhoIsCounted, trackingCaveat, WeeklyNote } from "./notes";
 
 /** Show a note when new listings were zero for this many days in a row. */
 const ZERO_RUN_NOTE_DAYS = 10;
@@ -90,7 +90,7 @@ async function load(ctx: DashboardContext) {
   };
 }
 
-function View({ data }: { data: ContributingData | null }) {
+function View({ data, ctx }: { data: ContributingData | null; ctx: DashboardContext }) {
   if (!data) return <NoSendYet />;
   const { kc, listings, creators, relists, contributing, weekly, zeroRun } = data;
   const { daysElapsed } = kc.windows;
@@ -161,7 +161,7 @@ function View({ data }: { data: ContributingData | null }) {
             covers as many before-window days as have passed since the send.
           </p>
           <WeeklyNote />
-          <EveryoneCounted />
+          <WhoIsCounted ctx={ctx} />
         </>
       }
     >

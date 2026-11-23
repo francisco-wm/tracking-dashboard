@@ -167,12 +167,9 @@ describe("health", () => {
 });
 
 describe("markers", () => {
-  it("marks each Knowledge Champions send, once its day has come", () => {
-    const label = "Knowledge Champions email";
-    const now = markers(derivePeriod("2026-11-18", 26)).filter((m) => m.label === label);
-    expect(now).toEqual([{ index: 18, label }]); // week of 28 Sep holds 1 Oct
-    // 1 Jan's week has started, but the send hasn't happened yet
-    expect(markers(derivePeriod("2026-12-30", 26)).filter((m) => m.label === label)).toHaveLength(1);
-    expect(markers(derivePeriod("2027-01-01", 26)).filter((m) => m.label === label)).toHaveLength(2);
+  it("marks each annotation once its day has come, and no Knowledge Champions sends", () => {
+    const label = "New knowledge requests released; citation tracking starts";
+    expect(markers(derivePeriod("2026-11-18", 26))).toEqual([{ index: 22, label }]); // week of 26 Oct holds 28 Oct
+    expect(markers(derivePeriod("2026-10-27", 26))).toEqual([]);
   });
 });

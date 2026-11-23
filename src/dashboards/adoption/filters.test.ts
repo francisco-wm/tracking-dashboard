@@ -11,8 +11,8 @@ import {
 } from "./filters";
 
 describe("parseFilters", () => {
-  it("defaults to 26 weeks with everyone counted", () => {
-    expect(parseFilters({})).toEqual({ weeks: 26, excludeInternal: false });
+  it("defaults to 26 weeks with internal users left out", () => {
+    expect(parseFilters({})).toEqual({ weeks: 26, excludeInternal: true });
   });
 
   it("accepts the offered ranges only", () => {
@@ -23,16 +23,16 @@ describe("parseFilters", () => {
     expect(parseFilters({ range: ["52", "13"] }).weeks).toBe(52);
   });
 
-  it("excludes internal users only when asked", () => {
-    expect(parseFilters({ internal: "exclude" }).excludeInternal).toBe(true);
+  it("includes internal users only when asked", () => {
     expect(parseFilters({ internal: "include" }).excludeInternal).toBe(false);
+    expect(parseFilters({ internal: "exclude" }).excludeInternal).toBe(true);
   });
 });
 
 describe("filterParams", () => {
   it("leaves defaults out of the URL", () => {
-    expect(filterParams({ weeks: 26, excludeInternal: false })).toEqual({ range: null, internal: null });
-    expect(filterParams({ weeks: 52, excludeInternal: true })).toEqual({ range: "52", internal: "exclude" });
+    expect(filterParams({ weeks: 26, excludeInternal: true })).toEqual({ range: null, internal: null });
+    expect(filterParams({ weeks: 52, excludeInternal: false })).toEqual({ range: "52", internal: "include" });
   });
 });
 

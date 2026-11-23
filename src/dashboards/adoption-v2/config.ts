@@ -1,8 +1,6 @@
 import type { ISODate } from "@/lib/dates";
 import type { EnvKey } from "@/lib/posthog/environments";
 
-import { SEND_DATES } from "../knowledge-champions/config";
-
 export const DASHBOARD_SLUG = "adoption-dashboard";
 
 /**
@@ -51,11 +49,8 @@ export const HEALTH = {
 
 /**
  * Vertical markers on every weekly chart, from their day on. Add holidays,
- * releases and customer events here. Knowledge Champions sends come from that
- * dashboard's SEND_DATES: the quarterly email to every non-guest user naming the
- * quarter's champion, meant to bring people back to ask or add knowledge.
+ * releases and customer events here.
  */
 export const ANNOTATIONS: { date: ISODate; label: string }[] = [
-  ...SEND_DATES.map((date) => ({ date, label: "Knowledge Champions email" })),
   { date: "2026-10-28", label: "New knowledge requests released; citation tracking starts" },
 ];

@@ -31,7 +31,7 @@ export function WhoIsCounted({ filters, env }: { filters: Filters; env: EnvKey }
     return (
       <p>
         <strong>Internal users are left out:</strong> {INTERNAL_PEOPLE[env].description}. Their events don’t
-        count anywhere on this page.
+        count anywhere on this page. Turn on “Include internal users” to count them.
       </p>
     );
   }

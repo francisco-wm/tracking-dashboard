@@ -1,9 +1,16 @@
 // HogQL for the Knowledge Champions dashboard. Each query was checked against
 // production (60292) and staging (55666) before being wired in. Values are
 // passed as {placeholders}; datetimes are "YYYY-MM-DD 00:00:00" in UTC.
-// No test-account filters anywhere: everyone is counted.
+// Internal users are dropped unless the viewer includes them: `people` is then an
+// AND clause built from INTERNAL_PEOPLE, otherwise "" and everyone is counted.
+// TRACKING_START ignores it: it asks when an event first existed, not who sent it.
 
 import { METRIC_SQL } from "@/lib/posthog/metrics";
+
+/** "" when everyone is counted; otherwise a clause that drops internal users' events. */
+export function peopleFilter(internalSql: string | null): string {
+  return internalSql ? `\n  AND NOT (${internalSql})` : "";
+}
 
 const M = METRIC_SQL;
 
@@ -11,7 +18,7 @@ const M = METRIC_SQL;
 export const HISTORY_START = "2020-01-01 00:00:00";
 
 /** Daily counts across both windows. Values: start, end (exclusive). */
-export const WINDOW_DAILY = `
+export const WINDOW_DAILY = (people: string) => `
 SELECT
   toDate(timestamp) AS day,
   countIf(${M.chatMessage}) AS questions,
@@ -23,7 +30,7 @@ SELECT
 FROM events
 WHERE timestamp >= toDateTime({start})
   AND timestamp < toDateTime({end})
-  AND event IN ('chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished', 'reach_email_cta_clicked')
+  AND event IN ('chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished', 'reach_email_cta_clicked')${people}
 GROUP BY day
 ORDER BY day`;
 
@@ -32,7 +39,7 @@ ORDER BY day`;
  * with the after-window days elapsed so far.
  * Values: start, matched_end, send, end (exclusive).
  */
-export const WINDOW_UNIQUES = `
+export const WINDOW_UNIQUES = (people: string) => `
 SELECT
   uniqIf(person_id, ${M.chatMessage} AND timestamp < toDateTime({matched_end})) AS asking_before_matched,
   uniqIf(person_id, ${M.chatMessage} AND timestamp < toDateTime({send})) AS asking_before,
@@ -47,10 +54,10 @@ SELECT
 FROM events
 WHERE timestamp >= toDateTime({start})
   AND timestamp < toDateTime({end})
-  AND event IN ('chat_message_sent', 'knowledge_shared', '$pageview', 'reach_email_cta_clicked')`;
+  AND event IN ('chat_message_sent', 'knowledge_shared', '$pageview', 'reach_email_cta_clicked')${people}`;
 
 /** People whose first-ever new listing falls in the windows. Values: history_start, start, end. */
-export const FIRST_TIME_CREATORS = `
+export const FIRST_TIME_CREATORS = (people: string) => `
 SELECT
   toDate(first_ts) AS day,
   count() AS creators
@@ -62,7 +69,7 @@ FROM (
   FROM events
   WHERE ${M.newListing}
     AND timestamp >= toDateTime({history_start})
-    AND timestamp < toDateTime({end})
+    AND timestamp < toDateTime({end})${people}
   GROUP BY person_id
 )
 WHERE first_ts >= toDateTime({start})
@@ -70,7 +77,7 @@ GROUP BY day
 ORDER BY day`;
 
 /** Monday-week series. Values: start, end (exclusive). */
-export const WEEKLY = `
+export const WEEKLY = (people: string) => `
 SELECT
   toStartOfWeek(timestamp, 1) AS week,
   countIf(${M.chatMessage}) AS questions,
@@ -83,7 +90,7 @@ SELECT
 FROM events
 WHERE timestamp >= toDateTime({start})
   AND timestamp < toDateTime({end})
-  AND event IN ('chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished', '$pageview')
+  AND event IN ('chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished', '$pageview')${people}
 GROUP BY week
 ORDER BY week`;
 
@@ -94,7 +101,7 @@ ORDER BY week`;
  * dropped off = active last week, not this week.
  * Values: history_start, prev_start (week before the range), end, first_week, last_week.
  */
-export const LIFECYCLE = `
+export const LIFECYCLE = (people: string) => `
 SELECT
   week,
   countIf(status = 'new') AS new_people,
@@ -119,7 +126,7 @@ FROM (
     FROM events
     WHERE ${M.active}
       AND timestamp >= toDateTime({history_start})
-      AND timestamp < toDateTime({end})
+      AND timestamp < toDateTime({end})${people}
     GROUP BY person_id
   )
 )
@@ -129,14 +136,14 @@ GROUP BY week
 ORDER BY week`;
 
 /** New listings per day. Values: start, end (exclusive). */
-export const LISTINGS_DAILY = `
+export const LISTINGS_DAILY = (people: string) => `
 SELECT
   toDate(timestamp) AS day,
   count() AS new_listings
 FROM events
 WHERE ${M.newListing}
   AND timestamp >= toDateTime({start})
-  AND timestamp < toDateTime({end})
+  AND timestamp < toDateTime({end})${people}
 GROUP BY day
 ORDER BY day`;
 
@@ -160,7 +167,7 @@ WHERE timestamp >= toDateTime({history_start})
  * new listing or a re-list within 7 days of the click, in any order.
  * Values: events_start (send - 7 days), send, end (exclusive).
  */
-export const CLICKERS = `
+export const CLICKERS = (people: string) => `
 SELECT
   toString(person_id) AS person_id,
   person_name,
@@ -195,7 +202,7 @@ FROM (
   FROM events
   WHERE timestamp >= toDateTime({events_start})
     AND timestamp < toDateTime({end})
-    AND event IN ('reach_email_cta_clicked', 'chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished')
+    AND event IN ('reach_email_cta_clicked', 'chat_message_sent', 'knowledge_shared', 'kp_status_changed', 'knowledge_piece_republished')${people}
   GROUP BY person_id
   HAVING countIf(${M.click} AND timestamp >= toDateTime({send})) > 0
 )

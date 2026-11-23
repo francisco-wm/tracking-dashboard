@@ -7,10 +7,10 @@ export const RANGE_WEEKS = [13, 26, 52] as const;
 export type RangeWeeks = (typeof RANGE_WEEKS)[number];
 export const DEFAULT_RANGE: RangeWeeks = 26;
 
-/** The viewer's choices, carried in the URL (?range=52, ?internal=exclude). */
+/** The viewer's choices, carried in the URL (?range=52, ?internal=include). */
 export interface Filters {
   weeks: RangeWeeks;
-  /** Off by default: everyone is counted unless the viewer asks otherwise. */
+  /** On by default: internal users are left out unless the viewer asks. */
   excludeInternal: boolean;
 }
 
@@ -22,14 +22,14 @@ function first(value: string | string[] | undefined): string | undefined {
 export function parseFilters(params: SearchParams): Filters {
   const range = Number(first(params.range));
   const weeks = (RANGE_WEEKS as readonly number[]).includes(range) ? (range as RangeWeeks) : DEFAULT_RANGE;
-  return { weeks, excludeInternal: first(params.internal) === "exclude" };
+  return { weeks, excludeInternal: first(params.internal) !== "include" };
 }
 
 /** URL overrides for a filter state. Defaults are left out so links stay short. */
 export function filterParams(filters: Filters): Record<string, string | null> {
   return {
     range: filters.weeks === DEFAULT_RANGE ? null : String(filters.weeks),
-    internal: filters.excludeInternal ? "exclude" : null,
+    internal: filters.excludeInternal ? null : "include",
   };
 }
 

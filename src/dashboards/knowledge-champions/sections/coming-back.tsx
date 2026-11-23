@@ -20,7 +20,7 @@ import {
 } from "../data";
 import { comingBackSentence } from "../sentences";
 import { WINDOW_DAYS } from "../windows";
-import { EveryoneCounted, WeeklyNote } from "./notes";
+import { WhoIsCounted, WeeklyNote } from "./notes";
 
 /** How many full weeks before the send week make up "a typical week". */
 const TYPICAL_WEEKS = 8;
@@ -65,7 +65,7 @@ function typicalCameBack(rows: LifecycleWeek[], sendWeekIndex: number): number |
   return Math.round(mean * 10) / 10;
 }
 
-function View({ data }: { data: ComingBackData | null }) {
+function View({ data, ctx }: { data: ComingBackData | null; ctx: DashboardContext }) {
   if (!data) return <NoSendYet />;
   const { kc, lifecycle, active } = data;
   const sendWeek = mondayOf(kc.windows.send);
@@ -120,7 +120,7 @@ function View({ data }: { data: ComingBackData | null }) {
             active people. If activity rose only because more people showed up, these lines stay flat.
           </p>
           <WeeklyNote />
-          <EveryoneCounted />
+          <WhoIsCounted ctx={ctx} />
         </>
       }
     >

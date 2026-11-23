@@ -9,7 +9,7 @@ import { formatDayMonth } from "@/lib/dates";
 import { COLORS } from "../chart-props";
 import { kcContext, loadWindowDaily, loadWindowUniques, type KCContext } from "../data";
 import { reachSentence } from "../sentences";
-import { EveryoneCounted } from "./notes";
+import { WhoIsCounted } from "./notes";
 
 interface ReachData {
   kc: KCContext;
@@ -37,7 +37,7 @@ async function load(ctx: DashboardContext) {
   };
 }
 
-function View({ data }: { data: ReachData | null }) {
+function View({ data, ctx }: { data: ReachData | null; ctx: DashboardContext }) {
   if (!data) return <NoSendYet />;
   const { kc, clickers, activeSinceSend, days } = data;
   const totalClicks = days.reduce((sum, d) => sum + (d.clicks ?? 0), 0);
@@ -62,7 +62,7 @@ function View({ data }: { data: ReachData | null }) {
             Most email clicks land in the first day or two; clicks later on mean people went back to the
             email.
           </p>
-          <EveryoneCounted />
+          <WhoIsCounted ctx={ctx} />
         </>
       }
     >

@@ -5,10 +5,10 @@ export const RANGE_DAYS = [30, 90, 180] as const;
 export type RangeDays = (typeof RANGE_DAYS)[number];
 export const DEFAULT_RANGE: RangeDays = 90;
 
-/** The viewer's choices, carried in the URL (?range=30, ?internal=exclude). */
+/** The viewer's choices, carried in the URL (?range=30, ?internal=include). */
 export interface Filters {
   days: RangeDays;
-  /** Off by default: everyone is counted unless the viewer asks otherwise. */
+  /** On by default: internal users are left out unless the viewer asks. */
   excludeInternal: boolean;
 }
 
@@ -20,14 +20,14 @@ function first(value: string | string[] | undefined): string | undefined {
 export function parseFilters(params: SearchParams): Filters {
   const range = Number(first(params.range));
   const days = (RANGE_DAYS as readonly number[]).includes(range) ? (range as RangeDays) : DEFAULT_RANGE;
-  return { days, excludeInternal: first(params.internal) === "exclude" };
+  return { days, excludeInternal: first(params.internal) !== "include" };
 }
 
 /** URL overrides for a filter state. Defaults are left out so links stay short. */
 export function filterParams(filters: Filters): Record<string, string | null> {
   return {
     range: filters.days === DEFAULT_RANGE ? null : String(filters.days),
-    internal: filters.excludeInternal ? "exclude" : null,
+    internal: filters.excludeInternal ? null : "include",
   };
 }
 
