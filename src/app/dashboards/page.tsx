@@ -28,7 +28,7 @@ export default function DashboardsIndex() {
           </form>
         )}
       </header>
-      <ul className="grid gap-4 md:grid-cols-2">
+      <ul className="flex flex-col gap-4">
         {DASHBOARDS.map((dashboard) => (
           <li key={dashboard.slug}>
             <Link

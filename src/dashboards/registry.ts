@@ -12,10 +12,10 @@ import type { DashboardModule } from "./types";
  */
 export const DASHBOARDS: readonly DashboardModule[] = [
   adoptionV2,
-  knowledgeChampions,
   fragmentEditing,
-  homeWidgets,
   knowledgeRequests,
+  homeWidgets,
+  knowledgeChampions,
 ];
 
 export function getDashboard(slug: string): DashboardModule | undefined {
