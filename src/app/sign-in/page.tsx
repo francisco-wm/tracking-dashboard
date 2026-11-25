@@ -7,7 +7,7 @@ import { ALLOWED_DOMAIN, safeCallbackPath } from "@/lib/auth/policy";
 export default function SignInPage(props: PageProps<"/sign-in">) {
   return (
     // max-w-[24rem], not max-w-md: starling's --spacing-md (10px) shadows the width scale and collapsed the column.
-    <main className="mx-auto flex min-h-screen w-full max-w-[24rem] flex-col justify-center gap-6 px-4">
+    <main className="mx-auto flex min-h-screen w-full max-w-96 flex-col justify-center gap-6 px-4">
       <div>
         <h1 className="font-serif text-heading-sm leading-tight">Tracking dashboard</h1>
         <p className="mt-2 text-body-sm text-text-secondary">Please login</p>
