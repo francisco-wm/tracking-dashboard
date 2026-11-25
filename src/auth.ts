@@ -12,7 +12,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       authorization: { params: { hd: ALLOWED_DOMAIN, prompt: "select_account" } },
     }),
   ],
-  session: { strategy: "jwt", maxAge: 60 * 60 * 12 },
+  // maxAge is left at the Auth.js default: 30 days, renewed on every visit.
+  // To change it, add `maxAge` in seconds, e.g. `{ strategy: "jwt", maxAge: 60 * 60 * 24 * 7 }` for 7 days.
+  session: { strategy: "jwt" },
   pages: { signIn: "/sign-in", error: "/sign-in" },
   // Local `next start` and Vercel both work without AUTH_URL; Google only
   // redirects to the callback URLs registered on the OAuth client.
